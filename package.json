@@ -1,0 +1,19 @@
+{
+  "name": "tiktok-live-game",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "server",
+    "game"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n server,game -c cyan,magenta \"npm run dev -w server\" \"npm run dev -w game\"",
+    "test": "vitest run",
+    "typecheck": "tsc -p server --noEmit && tsc -p game --noEmit"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

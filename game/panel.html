@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panou de control</title>
+    <link rel="stylesheet" href="/src/panel/panel.css" />
+  </head>
+  <body>
+    <!-- Textele cu data-i18n vin din game/src/i18n (ro.ts / en.ts), după limba aleasă în „Setări joc”. -->
+    <header>
+      <h1 data-i18n="panel.title">Panou de control</h1>
+      <div class="pills">
+        <span id="pill-server" class="pill off">server</span>
+        <span id="pill-sim" class="pill off">simulator</span>
+        <span id="pill-game" class="pill off" data-i18n="panel.pillGame">joc</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2 data-i18n="panel.game">Joc</h2>
+        <dl class="state">
+          <dt data-i18n="panel.phase">Faza</dt><dd id="st-phase">–</dd>
+          <dt data-i18n="panel.mode">Mod</dt><dd id="st-mode">–</dd>
+          <dt data-i18n="panel.timeLeft">Timp rămas</dt><dd id="st-time">–</dd>
+          <dt data-i18n="panel.characters">Caractere</dt><dd id="st-active">–</dd>
+          <dt data-i18n="panel.queued">În coadă</dt><dd id="st-queued">–</dd>
+          <dt>FPS</dt><dd id="st-fps">–</dd>
+        </dl>
+        <div class="row">
+          <button id="btn-debug" data-i18n="panel.toggleZones">Arată / ascunde zonele (F2)</button>
+        </div>
+        <p class="hint"><span data-i18n="panel.obsHint">Pentru OBS (1080×1920):</span> <code id="obs-url"></code></p>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="panel.settings">Setări joc</h2>
+        <div class="row">
+          <label for="set-lang" data-i18n="panel.language">Limba</label>
+          <select id="set-lang">
+            <option value="ro">Română</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <label class="toggle"><input type="checkbox" id="set-followers" /> <span data-i18n="panel.followersOnly">Doar urmăritorii (followers) pot intra în joc</span></label>
+        <label class="toggle"><input type="checkbox" id="set-gifters" /> <span data-i18n="panel.giftersBypass">Cine trimite un cadou intră oricum</span></label>
+        <p class="hint" data-i18n="panel.followersHint"></p>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="panel.streamer">Streamer</h2>
+        <p class="hint" data-i18n="panel.streamerHint"></p>
+        <div id="mode-buttons" class="grid"></div>
+        <div class="row">
+          <button id="btn-skip-vote" data-i18n="panel.skipVote">Sari peste vot (V)</button>
+          <button id="btn-end-round" data-i18n="panel.endPhase">Termină faza (N)</button>
+        </div>
+        <div id="vote-box" class="vote" hidden>
+          <h3 data-i18n="panel.voteRunning">Vot în desfășurare</h3>
+          <ol id="vote-list"></ol>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="panel.simulator">Simulator</h2>
+        <label class="toggle"><input type="checkbox" id="sim-enabled" /> <span data-i18n="panel.simOn">Pornit</span></label>
+        <div class="slider">
+          <label for="sim-viewers" data-i18n="panel.simViewers">Jucători falși</label>
+          <input type="range" id="sim-viewers" min="0" max="1000" step="10" />
+          <output id="out-viewers"></output>
+        </div>
+        <div class="slider">
+          <label for="sim-comments" data-i18n="panel.simComments">Comentarii / s</label>
+          <input type="range" id="sim-comments" min="0" max="200" step="1" />
+          <output id="out-comments"></output>
+        </div>
+        <div class="slider">
+          <label for="sim-likes" data-i18n="panel.simLikes">Like-uri / s</label>
+          <input type="range" id="sim-likes" min="0" max="50" step="1" />
+          <output id="out-likes"></output>
+        </div>
+        <div class="slider">
+          <label for="sim-gifts" data-i18n="panel.simGifts">Cadouri auto / min</label>
+          <input type="range" id="sim-gifts" min="0" max="60" step="1" />
+          <output id="out-gifts"></output>
+        </div>
+        <div class="slider">
+          <label for="sim-follower-pct" data-i18n="panel.simFollowerPct">% urmăritori</label>
+          <input type="range" id="sim-follower-pct" min="0" max="100" step="5" />
+          <output id="out-follower-pct"></output>
+        </div>
+        <div class="slider">
+          <label for="sim-follows" data-i18n="panel.simFollows">Follow-uri / min</label>
+          <input type="range" id="sim-follows" min="0" max="60" step="1" />
+          <output id="out-follows"></output>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="panel.gifts">Cadouri</h2>
+        <div class="row">
+          <label for="gift-count" data-i18n="panel.giftCount">Cantitate (serie)</label>
+          <input type="number" id="gift-count" min="1" max="999" value="5" />
+        </div>
+        <div id="gift-buttons" class="grid"></div>
+        <p class="hint" data-i18n="panel.giftHint"></p>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="panel.testChat">Comentariu de test</h2>
+        <form id="chat-form" class="row">
+          <input id="chat-nick" data-i18n-placeholder="panel.nickPlaceholder" value="Streamer" />
+          <input id="chat-text" data-i18n-placeholder="panel.textPlaceholder" class="grow" />
+          <button type="submit" data-i18n="panel.send">Trimite</button>
+        </form>
+        <div class="row">
+          <label class="toggle"><input type="checkbox" id="chat-follower" checked /> <span data-i18n="panel.isFollower">e urmăritor</span></label>
+          <button type="button" id="btn-follow" data-i18n="panel.follow">Dă follow</button>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <h2 data-i18n="panel.events">Evenimente</h2>
+        <ol id="log" class="log"></ol>
+      </section>
+    </main>
+
+    <script type="module" src="/src/panel/panel.ts"></script>
+  </body>
+</html>

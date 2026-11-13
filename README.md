@@ -231,6 +231,13 @@ La o versiune nouă instalezi peste cea veche; adresa salvată rămâne. Dacă s
 - **Înapoi** cere două apăsări, ca să nu închizi jocul din greșeală;
 - **ecranul de conectare** se redeschide atingând de **5 ori, repede, colțul din stânga sus** (gest ascuns). Nu apare singur în timpul live-ului, nici dacă se pierde legătura, ca să nu-l vadă spectatorii. Starea o vezi în panou.
 
+**Securitate:**
+- aplicația acceptă doar numele Tailscale, nu un IP, pentru că doar așa legătura e criptată (`wss://`);
+- serverul primește conexiuni doar de la paginile deschise pe calculator, de la aplicație și de la numele Tailscale exact al calculatorului. Alte site-uri (inclusiv alte `*.ts.net`) sunt refuzate;
+- comenzile (setări, mod, TikTok) le acceptă doar de la panou.
+
+Dacă Tailscale nu era pornit când ai dat `npm run dev`, repornește `npm run dev` ca să deschizi panoul prin numele Tailscale.
+
 Dacă jocul se mișcă greu pe telefon în timpul live-ului (telefonul desenează jocul și filmează ecranul în același timp), scade **Caractere pe ecran (max)** din panou, la **Setări joc**. Schimbarea se aplică imediat.
 
 **Mutarea serverului pe Mac:** pe Mac instalezi Node.js și Tailscale, copiezi proiectul (plus `.env`), rulezi `npm install`, `tailscale serve` (pasul 2) și `npm run dev`. Panoul de pe Mac îți arată noua adresă. Pe telefon o schimbi din ecranul de conectare (gestul ascuns). Același APK merge cu orice calculator.

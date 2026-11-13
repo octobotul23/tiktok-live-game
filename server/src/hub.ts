@@ -6,12 +6,14 @@ type Role = 'game' | 'panel';
 
 /**
  * Browserele nu aplică CORS la WebSocket, deci orice site deschis de streamer s-ar putea conecta
- * și trimite cadouri false sau comenzi. Acceptăm doar pagini servite de pe calculatorul local
- * (jocul, panoul, OBS) și clienții fără Origin (unelte din linia de comandă).
+ * și trimite cadouri false sau comenzi. Acceptăm doar:
+ * - pagini de pe calculatorul ăsta (jocul, panoul, OBS) și aplicația de telefon (Capacitor = https://localhost);
+ * - numele Tailscale EXACT al calculatorului (vezi `allowHost`). Nu tot `*.ts.net`: Tailscale Funnel
+ *   publică și site-uri ale altor oameni pe `*.ts.net`, iar unul deschis în browser s-ar putea conecta aici;
+ * - clienții fără Origin (unelte din linia de comandă), care oricum ajung aici doar de pe calculator
+ *   sau din rețeaua ta Tailscale.
  */
-// Pagini deschise pe calculatorul ăsta, în aplicația de pe telefon (Capacitor = https://localhost)
-// sau printr-un nume Tailscale (*.ts.net, rețeaua ta privată). Orice alt site e refuzat.
-const ALLOWED_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|[a-z0-9-]+(\.[a-z0-9-]+)*\.ts\.net)(:\d+)?$/i;
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
 
 /**
  * Centrul de rutare. Clienții se prezintă cu `hello` (game sau panel):
@@ -26,6 +28,8 @@ export class Hub {
   /** Ce ecran de joc e pe fiecare conexiune „game” (telefon sau browser). */
   private screens = new Map<WebSocket, ScreenInfo>();
   private greeting: (role: Role) => WireMsg[] = () => [];
+  /** Numele Tailscale ale calculatorului (ex. `x237.tail36214d.ts.net`), aflate la pornire. */
+  private trustedHosts = new Set<string>();
 
   onControl: (msg: ControlMsg) => boolean = () => false;
   onGameState: (state: GameState) => void = () => {};
@@ -35,7 +39,7 @@ export class Hub {
       server,
       path: WS_PATH,
       verifyClient: ({ origin }: { origin?: string }) => {
-        if (!origin || ALLOWED_ORIGIN.test(origin)) return true;
+        if (!origin || this.originAllowed(origin)) return true;
         console.warn(`[hub] conexiune respinsă de la ${origin}`);
         return false;
       },
@@ -52,6 +56,21 @@ export class Hub {
       ws.on('close', () => this.forget(ws));
       ws.on('error', () => this.forget(ws));
     });
+  }
+
+  /** Acceptă pagini deschise prin numele Tailscale al calculatorului (din `tailscale status`). */
+  allowHost(host: string): void {
+    this.trustedHosts.add(host.toLowerCase());
+  }
+
+  private originAllowed(origin: string): boolean {
+    if (LOCAL_ORIGIN.test(origin)) return true;
+    try {
+      const url = new URL(origin);
+      return url.protocol === 'https:' && this.trustedHosts.has(url.hostname.toLowerCase());
+    } catch {
+      return false;
+    }
   }
 
   private forget(ws: WebSocket): void {
@@ -115,6 +134,8 @@ export class Hub {
         for (const m of this.greeting(msg.role)) this.sendTo(ws, m);
         break;
       case 'control':
+        // Doar panoul dă comenzi; un ecran de joc nu are de ce.
+        if (this.roles.get(ws) !== 'panel') return;
         if (!this.onControl(msg.msg)) this.send(['game'], msg);
         break;
       case 'state':

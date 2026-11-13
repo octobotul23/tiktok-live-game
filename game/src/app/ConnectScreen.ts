@@ -1,5 +1,5 @@
 import { t } from '../i18n';
-import { LINK_STATE, saveAddress, savedAddress, toWsUrl } from '../net/serverAddress';
+import { LINK_STATE, isSecureEnough, saveAddress, savedAddress, toWsUrl } from '../net/serverAddress';
 
 /** Cât așteptăm la pornire până să arătăm câmpul de adresă (dacă nu s-a conectat singur). */
 const START_GRACE_MS = 6000;
@@ -84,6 +84,10 @@ export function setupConnectScreen(): void {
     const url = toWsUrl(input.value);
     if (!url) {
       setStatus('error', t('app.badAddress'));
+      return;
+    }
+    if (!isSecureEnough(url)) {
+      setStatus('error', t('app.needsName'));
       return;
     }
     setStatus('wait', t('app.connecting', { url }));

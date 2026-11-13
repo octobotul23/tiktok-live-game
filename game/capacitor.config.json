@@ -3,11 +3,9 @@
   "appName": "Live Game",
   "webDir": "dist-app",
   "server": {
-    "androidScheme": "https",
-    "cleartext": true
+    "androidScheme": "https"
   },
   "android": {
-    "allowMixedContent": true,
     "backgroundColor": "#0c1024"
   }
 }

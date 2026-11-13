@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toWsUrl } from './serverAddress';
+import { isSecureEnough, toWsUrl } from './serverAddress';
 
 describe('toWsUrl (adresa calculatorului din aplicația de telefon)', () => {
   it('numele Tailscale → wss, cu portul 5180 implicit', () => {
@@ -29,5 +29,14 @@ describe('toWsUrl (adresa calculatorului din aplicația de telefon)', () => {
     expect(toWsUrl('calculatorul meu')).toBeNull();
     expect(toWsUrl('pc')).toBeNull();
     expect(toWsUrl('user:parola@pc.ts.net')).toBeNull();
+  });
+});
+
+describe('isSecureEnough (aplicația cere legătură criptată)', () => {
+  it('wss și localhost trec, IP-ul necriptat nu', () => {
+    expect(isSecureEnough('wss://x237.tail36214d.ts.net:5180/ws')).toBe(true);
+    expect(isSecureEnough('ws://localhost:5180/ws')).toBe(true);
+    expect(isSecureEnough('ws://100.112.20.61:5180/ws')).toBe(false);
+    expect(isSecureEnough('ws://localhost.evil.com:5180/ws')).toBe(false);
   });
 });

@@ -42,6 +42,15 @@ export function toWsUrl(input: string): string | null {
   return `${scheme}://${host}:${port}${path}`;
 }
 
+/**
+ * În aplicație cerem conexiune criptată (wss://), ca nimeni din rețea să nu poată citi sau schimba
+ * ce trimite panoul. Excepție: localhost, care nu iese din dispozitiv. Un IP nu poate avea wss
+ * (certificatul Tailscale e pe nume), deci în aplicație se scrie numele, nu IP-ul.
+ */
+export function isSecureEnough(wsUrl: string): boolean {
+  return wsUrl.startsWith('wss://') || /^ws:\/\/(localhost|127\.0\.0\.1|\[::1\])[:/]/i.test(wsUrl);
+}
+
 /** Adresa salvată pe telefon (în aplicație), sau '' dacă nu a fost aleasă încă. */
 export function savedAddress(): string {
   try {
@@ -66,7 +75,10 @@ export const LINK_STATE = 'server-link-state';
 
 /** URL-ul WebSocket de folosit acum, sau null (în aplicație, până alege streamerul adresa). */
 export function currentWsUrl(): string | null {
-  if (IS_APP) return toWsUrl(savedAddress());
+  if (IS_APP) {
+    const url = toWsUrl(savedAddress());
+    return url && isSecureEnough(url) ? url : null;
+  }
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   return `${proto}://${location.host}${WS_PATH}`;
 }

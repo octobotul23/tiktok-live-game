@@ -50,6 +50,7 @@ const settings: GameSettings = { ...SERVER_CONFIG.game };
 const serverInfo: ServerInfo = { phoneAddress: null, version: SERVER_CONFIG.version, startedAt: new Date().toISOString() };
 // Numele Tailscale al calculatorului: panoul îl arată ca adresă pentru aplicația de telefon.
 void tailscaleDnsName().then((name) => {
+  if (name) hub.allowHost(name);
   serverInfo.phoneAddress = name ? `${name}:${SERVER_CONFIG.gamePort}` : null;
   hub.sendToPanels({ kind: 'serverInfo', info: serverInfo });
   console.log(`[server] adresa pentru telefon: ${serverInfo.phoneAddress ?? '(Tailscale nu e pornit)'}`);

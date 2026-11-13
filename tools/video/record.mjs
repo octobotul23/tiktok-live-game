@@ -60,6 +60,9 @@ window.__rec = (() => {
   const typeQueue = []; // mesajele persoanei urmărite, scrise unul după altul
   let lastSent = -1;
   const faces = [];
+  const later = []; // acțiuni declanșate după trimiterea unui mesaj (ex. cadoul anunțat în chat)
+  let zoom = null; // { start, inSec, hold, outSec, scale, target }
+  let focus = null; // punctul pe care stă camera, în coordonatele jocului (urmărește ținta lin)
 
   const color = (u) => {
     const p = scene.players.get(u.userId);
@@ -96,7 +99,61 @@ window.__rec = (() => {
       case 'typed': return typeQueue.push(a);
       case 'control': return scene.streamer({ action: a.action });
       case 'viewers': return __live.setViewers(a.n, faces);
+      case 'caption': return __live.caption(a.text, a.dur ?? 2.8);
+      case 'join': return __live.join(a.user.nickname, color(a.user));
+      case 'zoom':
+        zoom = { start: a.vt, inSec: a.inSec ?? 0.55, hold: a.hold ?? 2.2, outSec: a.outSec ?? 0.6, scale: a.scale ?? 1.35, target: a.target ?? 'featured' };
+        return;
     }
+  }
+
+  /** Unde e ținta zoom-ului acum (coordonatele jocului); null dacă nu există. */
+  function targetPos(name) {
+    const m = scene.mode;
+    if (name === 'featured') {
+      const e = scene.players.get(FEATURED)?.entity;
+      return e ? { x: e.x, y: e.y } : null;
+    }
+    if (name === 'boss') return m.boss ? { x: m.boss.x, y: m.boss.y } : null;
+    if (name === 'topBase' || name === 'bottomBase') {
+      const b = m.bases?.[name === 'topBase' ? 'top' : 'bottom'];
+      return b ? { x: b.x, y: b.y } : null;
+    }
+    if (name === 'base') return Number.isFinite(m.baseX) ? { x: m.baseX, y: m.baseY } : null;
+    return typeof name === 'object' ? name : null;
+  }
+
+  /** „Camera”: mărește doar jocul (nu și interfața LIVE), lin, spre țintă, fără să iasă din ecran. */
+  function applyZoom(vt) {
+    const c = game.canvas;
+    let s = 1;
+    if (zoom) {
+      const age = vt - zoom.start;
+      const total = zoom.inSec + zoom.hold + zoom.outSec;
+      const io = (x) => { const v = Math.min(1, Math.max(0, x)); return v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2; };
+      const k = age < zoom.inSec ? io(age / zoom.inSec) : age < zoom.inSec + zoom.hold ? 1 : 1 - io((age - zoom.inSec - zoom.hold) / zoom.outSec);
+      s = 1 + (zoom.scale - 1) * k;
+      const p = targetPos(zoom.target);
+      if (p) focus = focus ? { x: focus.x + (p.x - focus.x) * 0.2, y: focus.y + (p.y - focus.y) * 0.2 } : p;
+      if (age >= total) zoom = null;
+    }
+    if (s <= 1.0001 || !focus) {
+      c.style.transform = '';
+      if (!zoom) focus = null;
+      return;
+    }
+    const w = c.offsetWidth;
+    const h = c.offsetHeight;
+    const kx = w / game.scale.width;
+    // Punctul-țintă ajunge în mijlocul zonei de joc (puțin peste centru, unde nu e chatul).
+    const px = focus.x * kx;
+    const py = focus.y * kx;
+    let tx = w / 2 - px * s;
+    let ty = h * 0.4 - py * s;
+    tx = Math.min(0, Math.max(w - w * s, tx));
+    ty = Math.min(0, Math.max(h - h * s, ty));
+    c.style.transformOrigin = '0 0';
+    c.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
   }
 
   return {
@@ -105,19 +162,24 @@ window.__rec = (() => {
       if (pending && vt >= pending.sendAt) {
         __live.sent();
         chat(pending.user, pending.text);
+        for (const x of pending.after ?? []) later.push({ ...x, vt: vt + (x.delay ?? 0.6) });
         pending = null;
         lastSent = vt;
+      }
+      for (let i = later.length - 1; i >= 0; i--) {
+        if (later[i].vt <= vt) apply(later.splice(i, 1)[0]);
       }
       // Următorul mesaj începe abia după ce tastatura s-a închis de la cel dinainte.
       if (!pending && typeQueue.length && vt >= lastSent + 0.45) {
         const a = typeQueue.shift();
         const text = a.text.replace('{pvp}', () => String(option('pvp', 0) + 1));
-        pending = { user: a.user, text, sendAt: vt + __live.type(text) };
+        pending = { user: a.user, text, after: a.after, sendAt: vt + __live.type(text) };
       }
       for (let i = 0; i < steps; i++) {
         t += STEP;
         game.step(t, STEP);
       }
+      applyZoom(vt);
       __live.setViewers(Number.NaN, faces);
       // Eticheta „TU” deasupra caracterului persoanei urmărite, ca să știi care ești pe ecran.
       const me = scene.players.get(FEATURED);

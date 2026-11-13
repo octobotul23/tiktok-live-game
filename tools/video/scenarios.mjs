@@ -135,7 +135,7 @@ function kit(lang, seed) {
     return pick(r, kind === 'emoji' ? EMOJI_MOVES : L.moves[kind]);
   };
   /** Persoana urmărită atinge căsuța, scrie pe tastatura telefonului, apoi trimite (durata o dă tastarea). */
-  const typed = (at, text) => ({ at, type: 'typed', user: featured, text });
+  const typed = (at, text, extra = {}) => ({ at, type: 'typed', user: featured, text, ...extra });
   return { L, rnd, featured, moveText, typed, crowd: (n) => makeViewers(rnd, L.names, n) };
 }
 
@@ -340,12 +340,229 @@ function small(lang) {
   };
 }
 
+// ---------------------------------------------------------------------------------------------------
+// Trei povești cu început, cotitură și final. Persoana urmărită își anunță cadoul în chat, iar cadoul
+// vine imediat după mesaj (`after`), cu „camera” mărind acțiunea (`zoom`).
+
+const g = (at, user, gift, count = 1) => ({ at, type: 'gift', user, gift, count });
+const say = (at, user, text) => ({ at, type: 'chat', user, text });
+
+/** Boss Slayer cu 20 de oameni: boss-ul îi doboară pe rând, până când Mara trimite Leul. */
+function bossLion(lang) {
+  const { L, rnd, featured, moveText, typed, crowd: makeCrowd } = kit(lang, 424242);
+  const RO = lang === 'ro';
+  const crowd = makeCrowd(19);
+  const panic = RO
+    ? ['fugiți!!', 'CERCUL 😱', 'm-a lovit 😭', 'ieșiți din roșu!!', 'e prea tare', 'hai hai hai', 'loviți-l!!', '😱😱']
+    : ['RUN!!', 'THE CIRCLE 😱', 'it got me 😭', 'get out of the red!!', 'too strong', 'go go go', 'hit it!!', '😱😱'];
+  const wow = RO ? ['LEUL 😱😱😱', 'NU CRED 😭', 'MARAAA 🦁', 'ce a fost asta?!', '🦁🦁🦁', 'legendă'] : ['THE LION 😱😱😱', 'NO WAY 😭', 'MIAAA 🦁', 'what was that?!', '🦁🦁🦁', 'legend'];
+
+  const lobby = [
+    { at: 0.3, type: 'caption', text: RO ? '20 de oameni vs un *BOSS* 😱' : '20 people vs a *BOSS* 😱', dur: 2.6 },
+    ...crowd.map((v, i) => say(0.4 + i * 0.4 + rnd() * 0.2, v, rnd() < 0.3 ? pick(rnd, L.hello) : moveText(rnd))),
+    ...likes(rnd, { from: 1, to: 10, every: 0.6, pool: crowd }),
+    typed(0.8, RO ? 'hai că-l batem 💪' : "we can beat it 💪"),
+    { at: 0, type: 'viewers', n: 12 },
+    { at: 4, type: 'viewers', n: 17 },
+    { at: 8, type: 'viewers', n: 20 },
+  ];
+
+  const lionAt = 33;
+  const playing = [
+    ...chatter(rnd, { to: lionAt + 2, rate: 3, pool: crowd, text: (r) => (r() < 0.72 ? moveText(r) : pick(r, panic)) }),
+    ...likes(rnd, { to: 60, every: 0.25, pool: crowd }),
+    typed(1, RO ? 'stanga' : 'left'),
+    typed(4.5, RO ? 'fugiți din cerc!! 😱' : 'get out of the circle!! 😱'),
+    g(5, crowd[1], 'Rose', 10),
+    typed(9, RO ? 'sus sus' : 'up up'),
+    g(11, crowd[4], 'Doughnut', 2),
+    typed(13, RO ? 'm-a prins 😭' : 'it got me 😭'),
+    g(16, crowd[8], 'TikTok', 6),
+    typed(18, RO ? 'mersi de scut ❤️' : 'thx for the shield ❤️'),
+    g(22, crowd[11], 'Corgi', 1),
+    typed(23, RO ? 'dreapta' : 'right'),
+    g(27, crowd[3], 'Finger Heart', 2),
+    typed(27.5, RO ? 'mai tare!! 🔥' : 'harder!! 🔥'),
+    typed(lionAt, RO ? 'ok… trimit LEUL 🦁' : 'ok… sending the LION 🦁', {
+      after: [
+        { type: 'zoom', target: 'featured', scale: 1.45, hold: 1.5, delay: 0.1 },
+        { type: 'gift', user: featured, gift: 'Lion', count: 1, delay: 0.7 },
+        { type: 'zoom', target: 'boss', scale: 1.3, hold: 2.2, delay: 2.85 },
+        ...wow.map((text, i) => ({ type: 'chat', user: crowd[(i * 3 + 2) % crowd.length], text, delay: 1.3 + i * 0.45 })),
+      ],
+    }),
+    { at: 6, type: 'viewers', n: 23 },
+    { at: 20, type: 'viewers', n: 27 },
+    // Plasă de siguranță: dacă boss-ul n-a murit până aici, runda se încheie oricum.
+    { at: 60, type: 'control', action: 'endRound' },
+  ];
+
+  const results = [
+    ...chatter(rnd, { from: 0.3, to: 8, rate: 2.5, pool: crowd, text: (r) => pick(r, [...L.results, ...wow]) }),
+    typed(0.4, RO ? 'gg 🦁👑' : 'gg 🦁👑'),
+    { at: 1, type: 'viewers', n: 31 },
+  ];
+
+  return {
+    lang,
+    url: '/?debug=1&mode=boss',
+    prepare: { seconds: 0.4, actions: [] },
+    segments: [
+      { phase: 'lobby', actions: lobby },
+      { phase: 'playing', actions: playing },
+      { phase: 'results', actions: results, endAfter: 7 },
+    ],
+  };
+}
+
+/** Sus vs Jos: echipa Marei (JOS) pierde, apoi revine și distruge baza de SUS. */
+function pvpComeback(lang) {
+  const { L, rnd, featured, moveText, typed, crowd: makeCrowd } = kit(lang, 9090);
+  const RO = lang === 'ro';
+  const crowd = makeCrowd(24);
+  const top = crowd.filter((_, i) => i % 2 === 0);
+  const bottom = crowd.filter((_, i) => i % 2 === 1);
+  const worried = RO ? ['baza noastră!! 😱', 'ne bat 😭', 'apărați!!', 'JOS unde sunteți?', 'nuuu'] : ['our base!! 😱', "they're winning 😭", 'defend!!', 'BOTTOM where are you?', 'nooo'];
+  const cocky = RO ? ['SUS câștigă 😎', 'gg ez', 'hahaha', 'SUS 🔵🔵'] : ['TOP wins 😎', 'gg ez', 'hahaha', 'TOP 🔵🔵'];
+  const wow = RO ? ['GALAXIA 😱', 'NU CRED 😭', 'JOS 🔴🔴🔴', 'ce revenire!!', 'MARA 👑'] : ['THE GALAXY 😱', 'NO WAY 😭', 'BOTTOM 🔴🔴🔴', 'what a comeback!!', 'MIA 👑'];
+
+  const lobby = [
+    { at: 0.3, type: 'caption', text: RO ? 'Echipa JOS pierdea… *până la final* 😳' : 'Team BOTTOM was losing… *until the end* 😳', dur: 2.8 },
+    ...top.map((v) => say(0.4 + rnd() * 7.5, v, weighted(rnd, L.teamTop))),
+    ...bottom.map((v) => say(0.4 + rnd() * 7.5, v, weighted(rnd, L.teamBottom))),
+    typed(0.7, RO ? 'echipa jos 🔴' : 'team down 🔴'),
+    ...likes(rnd, { from: 1, to: 10, every: 0.5, pool: crowd }),
+    { at: 0, type: 'viewers', n: 18 },
+    { at: 5, type: 'viewers', n: 25 },
+  ];
+
+  const galaxyAt = 29;
+  const playing = [
+    ...chatter(rnd, { to: 8, rate: 4, pool: crowd, text: (r) => moveText(r) }),
+    ...chatter(rnd, { from: 8, to: galaxyAt, rate: 4, pool: crowd, text: (r, v) => (r() < 0.75 ? moveText(r) : pick(r, top.includes(v) ? cocky : worried)) }),
+    ...chatter(rnd, { from: galaxyAt, to: 70, rate: 3.5, pool: crowd, text: (r) => moveText(r) }),
+    ...likes(rnd, { to: 70, every: 0.22, pool: crowd }),
+    // SUS ia avans: putere și bombe pe baza de JOS.
+    g(3, top[1], 'Rose', 15),
+    g(7, top[3], 'Doughnut', 2),
+    say(8.4, bottom[2], worried[0]),
+    say(9.2, bottom[4], worried[1]),
+    g(12, top[5], 'Doughnut', 1),
+    g(15, top[2], 'TikTok', 8),
+    typed(1.2, RO ? 'sus' : 'up'),
+    typed(5, RO ? 'apărați baza!!' : 'defend the base!!'),
+    typed(9.5, RO ? 'nu se poate 😭' : 'no way 😭'),
+    typed(14, RO ? 'hai JOS, nu ne lăsăm 💪' : "come on BOTTOM, don't give up 💪"),
+    typed(19, RO ? 'ridicați-vă ❤️' : 'get up ❤️', { after: [{ type: 'gift', user: featured, gift: 'Finger Heart', count: 3, delay: 0.5 }] }),
+    // JOS răspunde.
+    g(22, bottom[2], 'Doughnut', 2),
+    say(23.2, bottom[7], RO ? 'HAI JOS 🔴' : 'GO BOTTOM 🔴'),
+    g(26, bottom[5], 'Doughnut', 3),
+    typed(galaxyAt, RO ? 'acum e momentul… 🌌' : 'now is the moment… 🌌', {
+      after: [
+        { type: 'zoom', target: 'topBase', scale: 1.35, hold: 2.6, delay: 0.2 },
+        { type: 'gift', user: featured, gift: 'Galaxy', count: 1, delay: 0.75 },
+        ...wow.map((text, i) => ({ type: 'chat', user: bottom[(i * 2 + 1) % bottom.length], text, delay: 1.4 + i * 0.45 })),
+      ],
+    }),
+    { at: 10, type: 'viewers', n: 29 },
+    { at: 24, type: 'viewers', n: 34 },
+    { at: 62, type: 'control', action: 'endRound' },
+  ];
+
+  const results = [
+    ...chatter(rnd, { from: 0.3, to: 8, rate: 2.5, pool: bottom, text: (r) => pick(r, [...wow, 'gg']) }),
+    say(1.5, top[1], RO ? 'gg… 😭' : 'gg… 😭'),
+    typed(0.4, RO ? 'gg 🔴🌌' : 'gg 🔴🌌'),
+  ];
+
+  return {
+    lang,
+    url: '/?debug=1&mode=pvp',
+    prepare: { seconds: 0.4, actions: [] },
+    segments: [
+      { phase: 'lobby', actions: lobby },
+      { phase: 'playing', actions: playing },
+      { phase: 'results', actions: results, endAfter: 7 },
+    ],
+  };
+}
+
+/** Tower Defense: chatul construiește turnurile din cadouri; Mara salvează cristalul. */
+function towers(lang) {
+  const { rnd, featured, moveText, typed, crowd: makeCrowd } = kit(lang, 31337);
+  const RO = lang === 'ro';
+  const crowd = makeCrowd(14);
+  const talk = RO
+    ? ['stați lângă drum!!', 'vin mulți 😱', 'turnul ăla e beton', 'hai hai', '🔥🔥', 'încă un turn!!', 'ce tare 😂']
+    : ['stay by the road!!', 'so many 😱', 'that tower is insane', 'go go', '🔥🔥', 'one more tower!!', 'so cool 😂'];
+
+  const lobby = [
+    { at: 0.3, type: 'caption', text: RO ? 'Turnurile le construiți *voi*, din cadouri 🏰' : '*You* build the towers, with gifts 🏰', dur: 2.8 },
+    ...crowd.map((v, i) => say(0.4 + i * 0.55 + rnd() * 0.2, v, moveText(rnd))),
+    ...likes(rnd, { from: 1, to: 10, every: 0.8, pool: crowd }),
+    typed(0.8, RO ? 'salut! stanga' : 'hi! left'),
+    { at: 0, type: 'viewers', n: 9 },
+    { at: 5, type: 'viewers', n: 15 },
+  ];
+
+  const T = 50;
+  const playing = [
+    ...chatter(rnd, { to: T, rate: 2, pool: crowd, text: (r) => (r() < 0.78 ? moveText(r) : pick(r, talk)) }),
+    ...likes(rnd, { to: T, every: 0.4, pool: crowd }),
+    g(4, crowd[2], 'Rose', 3),
+    typed(1, RO ? 'jos' : 'down'),
+    typed(5.5, RO ? 'turn!! 🌹' : 'a tower!! 🌹'),
+    g(9.5, crowd[5], 'Ice Cream Cone', 2),
+    typed(11, RO ? 'pun și eu unul 🍦' : "I'll add one 🍦", {
+      after: [
+        { type: 'gift', user: featured, gift: 'Ice Cream Cone', count: 3, delay: 0.5 },
+        { type: 'chat', user: crowd[6], text: RO ? 'gheață!! ❄️' : 'ice!! ❄️', delay: 1.6 },
+      ],
+    }),
+    g(17, crowd[7], 'Doughnut', 1),
+    typed(18.5, RO ? 'un TUN 💣' : 'a CANNON 💣'),
+    typed(23, RO ? 'dreapta' : 'right'),
+    g(25, crowd[9], 'Rose', 5),
+    typed(28, RO ? 'salvez eu cristalul 🫶' : "I'll save the crystal 🫶", {
+      after: [
+        { type: 'zoom', target: 'featured', scale: 1.4, hold: 1.8, delay: 0.1 },
+        { type: 'gift', user: featured, gift: 'Hand Hearts', count: 1, delay: 0.6 },
+        { type: 'chat', user: crowd[1], text: RO ? 'MARA aurie 👑' : 'golden MIA 👑', delay: 1.8 },
+        { type: 'chat', user: crowd[10], text: RO ? 'tun nivel 3 😱' : 'level 3 cannon 😱', delay: 2.4 },
+      ],
+    }),
+    g(36, crowd[11], 'Doughnut', 2),
+    typed(37, RO ? 'încă un tun!! 🍩' : 'another cannon!! 🍩'),
+    g(42, crowd[3], 'Finger Heart', 2),
+    typed(43, RO ? 'nu trece nimeni 😎' : 'nobody gets through 😎'),
+    { at: 10, type: 'viewers', n: 19 },
+    { at: 30, type: 'viewers', n: 24 },
+  ];
+
+  return {
+    lang,
+    url: '/?debug=1&mode=td',
+    prepare: { seconds: 0.4, actions: [] },
+    segments: [
+      { phase: 'lobby', actions: lobby },
+      { phase: 'playing', actions: playing, endAfter: T },
+    ],
+  };
+}
+
 /** Numele fișierului → scenariul. */
 export const SCENARIOS = {
   survival: () => ({ ...survival('ro'), name: 'survival', title: 'Survival: chatul apără cristalul' }),
   'vot-pvp': () => ({ ...votePvp('ro'), name: 'vot-pvp', title: 'Votul chatului, apoi Sus vs Jos' }),
   'camera-mica': () => ({ ...small('ro'), name: 'camera-mica', title: 'Cameră mică: 10 oameni, tastatura telefonului' }),
   'small-room-en': () => ({ ...small('en'), name: 'small-room-en', title: 'Small room: 10 people, phone keyboard (EN)' }),
+  'boss-leu': () => ({ ...bossLion('ro'), name: 'boss-leu', title: 'Boss Slayer: Mara trimite Leul' }),
+  'pvp-revenire': () => ({ ...pvpComeback('ro'), name: 'pvp-revenire', title: 'Sus vs Jos: revenirea echipei JOS' }),
+  'td-turnuri': () => ({ ...towers('ro'), name: 'td-turnuri', title: 'Tower Defense: turnurile din cadouri' }),
+  'boss-lion-en': () => ({ ...bossLion('en'), name: 'boss-lion-en', title: 'Boss Slayer: Mia sends the Lion (EN)' }),
+  'pvp-comeback-en': () => ({ ...pvpComeback('en'), name: 'pvp-comeback-en', title: 'Top vs Bottom: the comeback (EN)' }),
+  'td-towers-en': () => ({ ...towers('en'), name: 'td-towers-en', title: 'Tower Defense: gift towers (EN)' }),
   'survival-en': () => ({ ...survival('en'), name: 'survival-en', title: 'Survival: chat defends the crystal (EN)' }),
   'vote-pvp-en': () => ({ ...votePvp('en'), name: 'vote-pvp-en', title: 'Chat vote, then Top vs Bottom (EN)' }),
 };

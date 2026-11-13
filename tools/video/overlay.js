@@ -89,6 +89,10 @@
     box-shadow: 0 8px 24px rgba(0,0,0,.5); }
   .lv-home { position: absolute; left: 50%; bottom: 16px; width: 280px; height: 9px; margin-left: -140px; border-radius: 9px; background: rgba(255,255,255,.55); }
 
+  .lv-cap { position: absolute; left: 50px; right: 50px; top: 360px; text-align: center; font-size: 68px; font-weight: 900;
+    line-height: 1.12; color: #fff; -webkit-text-stroke: 10px #000; paint-order: stroke fill;
+    text-shadow: 0 6px 18px rgba(0,0,0,.55); }
+  .lv-cap b { color: #ffd166; }
   .lv-me { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; }
   .lv-me .tag { background: #fe2c55; border: 3px solid #fff; border-radius: 999px; padding: 4px 18px; font-size: 26px; font-weight: 800;
     white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
@@ -114,6 +118,8 @@
   const graphemes = (s) => [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s)].map((x) => x.segment);
   const plain = (ch) => ch.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+  let capEl = null;
+  let cap = null; // { born, dur }
   let root, chatBox, viewersEl, facesEl, likesEl, inputEl, bannerBox, heartBox, bottomEl, btnEls, kbEl, stripEl, popEl, tapEl, meEl;
   const keys = new Map(); // id → element
   const msgs = []; // { node, born, y, h }
@@ -345,7 +351,9 @@
     tapEl = el('div', 'lv-tap');
     tapEl.style.opacity = '0';
 
-    root.append(top, meEl, heartBox, chatBox, bannerBox, kbEl, bottomEl, tapEl);
+    capEl = el('div', 'lv-cap');
+    capEl.style.opacity = '0';
+    root.append(top, capEl, meEl, heartBox, chatBox, bannerBox, kbEl, bottomEl, tapEl);
     document.body.append(root);
   }
 
@@ -436,6 +444,13 @@
       typing = null;
       closeAt = now;
     },
+    /** Titlu mare peste joc (ca textul pus peste un clip pe TikTok); *cuvânt* iese galben. */
+    caption(text, dur) {
+      capEl.replaceChildren(
+        ...text.split(/(\*[^*]+\*)/).filter(Boolean).map((part) => (part.startsWith('*') ? el('b', '', part.slice(1, -1)) : document.createTextNode(part))),
+      );
+      cap = { born: now, dur };
+    },
     /** Eticheta „TU” deasupra caracterului persoanei urmărite (coordonate în pagină; null = ascunsă). */
     marker(x, y, name) {
       if (x === null || x === undefined) {
@@ -454,6 +469,17 @@
     tick(t) {
       now = t;
       likesEl.textContent = `❤️ ${fmt(12400 + hostLikes)}`;
+
+      // Titlul: apare cu un mic „pop”, stă, apoi se stinge.
+      if (cap) {
+        const age = now - cap.born;
+        const pop = Math.min(1, age / 0.22);
+        const back = 1 + 0.18 * Math.sin(pop * Math.PI);
+        const out = age > cap.dur ? Math.min(1, (age - cap.dur) / 0.3) : 0;
+        capEl.style.opacity = String(Math.min(1, age / 0.12) * (1 - out));
+        capEl.style.transform = `scale(${(0.7 + 0.3 * pop) * back})`;
+        if (out >= 1) cap = null;
+      } else capEl.style.opacity = '0';
 
       // Tastatura: urcă după atingerea căsuței, coboară după trimitere.
       if (typing) kbOpen = easeIO((now - typing.start - 0.16) / 0.32);

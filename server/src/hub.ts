@@ -1,6 +1,6 @@
 import type { Server as HttpServer } from 'node:http';
 import { WebSocket, WebSocketServer } from 'ws';
-import { WS_PATH, type ControlMsg, type GameState, type LiveEvent, type ScreenInfo, type SourceStatus, type WireMsg } from '../../shared/protocol';
+import { WS_PATH, type ControlMsg, type GamePhase, type GameState, type LiveEvent, type ScreenInfo, type SourceStatus, type WireMsg } from '../../shared/protocol';
 
 type Role = 'game' | 'panel';
 
@@ -142,7 +142,7 @@ export class Hub {
       case 'hello':
         if (this.lanSockets.has(ws) && msg.role !== 'game') {
           console.warn('[hub] pe Wi-Fi se intră doar ca ecran de joc; conexiune închisă.');
-          ws.close();
+          ws.terminate();
           return;
         }
         this.roles.set(ws, msg.role);
@@ -160,11 +160,15 @@ export class Hub {
         if (this.roles.get(ws) !== 'panel') return;
         if (!this.onControl(msg.msg)) this.send(['game'], msg);
         break;
-      case 'state':
-        this.lastState = msg.state;
-        this.onGameState(msg.state);
-        this.send(['panel'], msg);
+      case 'state': {
+        // Starea vine doar de la un ecran de joc care s-a prezentat; o verificăm înainte s-o folosim.
+        if (this.roles.get(ws) !== 'game') return;
+        const state = cleanState(msg.state);
+        this.lastState = state;
+        this.onGameState(state);
+        this.send(['panel'], { kind: 'state', state });
         break;
+      }
     }
   }
 
@@ -185,4 +189,33 @@ function cleanScreen(raw: unknown): ScreenInfo {
   const r = (raw ?? {}) as Partial<Record<keyof ScreenInfo, unknown>>;
   const short = (v: unknown) => (typeof v === 'string' ? v.slice(0, 40) : '');
   return { platform: r.platform === 'android' ? 'android' : 'web', version: short(r.version), builtAt: short(r.builtAt) };
+}
+
+const PHASES: readonly GamePhase[] = ['sandbox', 'lobby', 'playing', 'results', 'vote'];
+
+/** Starea jocului vine de la client: tipuri cunoscute, numere în limite, texte și liste scurte. */
+function cleanState(raw: unknown): GameState {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const str = (v: unknown, max = 60) => (typeof v === 'string' ? v.slice(0, max) : '');
+  const num = (v: unknown, lo: number, hi: number) =>
+    typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo;
+  const list = (v: unknown, max = 20) => (Array.isArray(v) ? v.slice(0, max) : []);
+  const obj = (v: unknown) => (v ?? {}) as Record<string, unknown>;
+  return {
+    phase: PHASES.includes(r.phase as GamePhase) ? (r.phase as GamePhase) : 'sandbox',
+    modeId: str(r.modeId, 40),
+    modeName: str(r.modeName),
+    phaseEndsInSec: r.phaseEndsInSec === null ? null : num(r.phaseEndsInSec, 0, 86_400),
+    modes: list(r.modes).map((m) => ({ id: str(obj(m).id, 40), name: str(obj(m).name) })),
+    voteOptions: list(r.voteOptions, 10).map((o) => ({
+      modeId: str(obj(o).modeId, 40),
+      name: str(obj(o).name),
+      votes: num(obj(o).votes, 0, 1e9),
+    })),
+    voteGifts: list(r.voteGifts, 10).map((g) => str(g, 40)),
+    modeCommandSamples: list(r.modeCommandSamples).map((c) => str(c, 40)),
+    activePlayers: num(r.activePlayers, 0, 1e6),
+    queued: num(r.queued, 0, 1e6),
+    fps: num(r.fps, 0, 1000),
+  };
 }

@@ -312,6 +312,18 @@ npm run video -- survival-en vote-pvp-en
 | `vot-pvp` | română | rezultatele unei runde Boss Slayer, votul chatului, apoi Sus vs Jos |
 | `survival-en` | engleză | același Survival, cu jocul, chatul și comenzile în engleză (`up`, `left`…) |
 | `vote-pvp-en` | engleză | votul, apoi Top vs Bottom (`team up` / `team down`) |
+| `boss-leu` | română | 20 de oameni vs Boss: chatul pierde, Mara scrie „trimit LEUL”, camera se apropie și leul dă lovitura de final |
+| `boss-lion-en` | engleză | aceeași poveste cu boss-ul, în engleză |
+| `pvp-revenire` | română | Sus vs Jos: echipa SUS conduce, Mara strânge echipa JOS, trimite Galaxia pe baza adversă și JOS câștigă |
+| `pvp-comeback-en` | engleză | aceeași revenire, Top vs Bottom |
+| `td-turnuri` | română | Tower Defense: chatul construiește turnuri din cadouri, Mara pune turnuri de gheață și un tun auriu |
+| `td-towers-en` | engleză | același Tower Defense, în engleză |
+
+Ultimele trei povești folosesc trei unelte în plus din scenarii:
+
+- `caption`: un titlu mare peste video, cu cuvintele între `*steluțe*` în galben.
+- `zoom`: camera se apropie lin de Mara, de boss sau de o bază, apoi revine.
+- `after` pe un mesaj scris: acțiuni care pornesc la câteva clipe după ce Mara apasă trimiterea (de ex. cadoul chiar după „trimit LEUL”), ca să pară că ea a făcut-o.
 
 - Fișierele ies în `videos/` (nu intră în git).
 - Pagina filmată nu se conectează la server, deci nu încurcă jocul tău deschis.

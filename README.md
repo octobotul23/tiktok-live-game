@@ -239,7 +239,7 @@ La o versiune nouă instalezi peste cea veche; adresa salvată rămâne. Dacă s
 
 **Securitate:**
 - aplicația acceptă numele Tailscale (legătură criptată, `wss://`) sau un IP din rețeaua de acasă (192.168.x.x, 10.x.x.x). Pe Wi-Fi legătura e necriptată, dar nu iese din casă; un IP de pe internet e refuzat;
-- cu `WIFI=true`, jocul se deschide doar pe IP-ul de acasă al calculatorului, nu și pe VPN-uri (ex. Radmin) sau mașini virtuale. **Nu-l porni pe un Wi-Fi public sau împărțit**: oricine e în aceeași rețea ar putea ajunge la joc. Windows poate cere o dată voie în firewall pentru Node.js: alege „Rețele private”;
+- cu `WIFI=true`, pe IP-ul de acasă al calculatorului (nu și pe VPN-uri ca Radmin sau pe mașini virtuale) se deschide **doar legătura pentru aplicație**: panoul și fișierele jocului rămân doar pe calculator. De pe Wi-Fi se intră doar ca ecran de joc, deci nimeni din rețea nu poate da comenzi. Totuși, nu porni `WIFI=true` pe un Wi-Fi public sau împărțit. Dacă IP-ul găsit singur nu e cel bun, îl fixezi cu `WIFI_IP=192.168.1.13` în `.env`. Windows poate cere o dată voie în firewall pentru Node.js: alege „Rețele private”;
 - dacă routerul îi dă calculatorului alt IP (după o repornire), panoul arată adresa nouă; o schimbi în aplicație cu gestul ascuns;
 - serverul primește conexiuni doar de la paginile deschise pe calculator, de la aplicație și de la numele Tailscale exact al calculatorului. Alte site-uri (inclusiv alte `*.ts.net`) sunt refuzate;
 - comenzile (setări, mod, TikTok) le acceptă doar de la panou.

@@ -13,6 +13,8 @@ type Role = 'game' | 'panel';
  * - clienții fără Origin (unelte din linia de comandă), care oricum ajung aici doar de pe calculator
  *   sau din rețeaua ta Tailscale.
  */
+/** Originea aplicației de telefon (Capacitor, androidScheme https). */
+const APP_ORIGIN = 'https://localhost';
 const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
 
 /**
@@ -28,6 +30,8 @@ export class Hub {
   /** Ce ecran de joc e pe fiecare conexiune „game” (telefon sau browser). */
   private screens = new Map<WebSocket, ScreenInfo>();
   private greeting: (role: Role) => WireMsg[] = () => [];
+  /** Conexiunile venite pe Wi-Fi-ul de acasă: au voie doar ca ecran de joc, niciodată ca panou. */
+  private lanSockets = new WeakSet<WebSocket>();
   /** Numele Tailscale ale calculatorului (ex. `x237.tail36214d.ts.net`), aflate la pornire. */
   private trustedHosts = new Set<string>();
 
@@ -35,16 +39,29 @@ export class Hub {
   onGameState: (state: GameState) => void = () => {};
 
   constructor(server: HttpServer) {
+    this.attach(server, false);
+  }
+
+  /**
+   * Intrarea de pe Wi-Fi-ul de acasă (WIFI=true): aici intră doar aplicația de telefon, ca ecran de joc.
+   * Fără panou și fără comenzi: cine e în aceeași rețea nu poate schimba nimic.
+   */
+  attachLan(server: HttpServer): void {
+    this.attach(server, true);
+  }
+
+  private attach(server: HttpServer, lan: boolean): void {
     const wss = new WebSocketServer({
       server,
       path: WS_PATH,
       verifyClient: ({ origin }: { origin?: string }) => {
-        if (!origin || this.originAllowed(origin)) return true;
-        console.warn(`[hub] conexiune respinsă de la ${origin}`);
-        return false;
+        const ok = lan ? origin === APP_ORIGIN : !origin || this.originAllowed(origin);
+        if (!ok) console.warn(`[hub] conexiune respinsă${lan ? ' pe Wi-Fi' : ''} de la ${origin ?? '(fără Origin)'}`);
+        return ok;
       },
     });
     wss.on('connection', (ws) => {
+      if (lan) this.lanSockets.add(ws);
       ws.on('message', (data) => {
         // Un mesaj greșit (ex. dintr-un panou vechi) nu are voie să oprească serverul în mijlocul live-ului.
         try {
@@ -123,6 +140,11 @@ export class Hub {
     }
     switch (msg.kind) {
       case 'hello':
+        if (this.lanSockets.has(ws) && msg.role !== 'game') {
+          console.warn('[hub] pe Wi-Fi se intră doar ca ecran de joc; conexiune închisă.');
+          ws.close();
+          return;
+        }
         this.roles.set(ws, msg.role);
         if (msg.role === 'game') {
           this.screens.set(ws, cleanScreen(msg.screen));

@@ -4,7 +4,7 @@ import { clampMaxActive, SERVER_CONFIG } from './config';
 import { Hub } from './hub';
 import { Simulator } from './sim/Simulator';
 import { homeAddresses } from './network';
-import { openWifiBridge } from './wifiBridge';
+import { openWifiEntry } from './wifiEntry';
 import { tailscaleDnsName } from './tailscale';
 import { cleanUsername, TikTokConnector } from './tiktok/Connector';
 import { GiftStreakCollapser } from './tiktok/normalize';
@@ -57,8 +57,8 @@ const serverInfo: ServerInfo = {
 };
 if (SERVER_CONFIG.wifi) {
   const ips = homeAddresses();
-  if (ips.length) openWifiBridge(ips, SERVER_CONFIG.gamePort);
-  else console.warn('[wifi] WIFI=true, dar nu găsesc calculatorul într-o rețea de acasă (192.168.x.x / 10.x.x.x).');
+  if (ips.length) openWifiEntry(hub, ips, SERVER_CONFIG.gamePort);
+  else console.warn('[wifi] WIFI=true, dar nu găsesc calculatorul într-o rețea de acasă (192.168.x.x / 10.x.x.x). Pune IP-ul în WIFI_IP.');
 }
 // Numele Tailscale al calculatorului: panoul îl arată ca adresă pentru aplicația de telefon.
 void tailscaleDnsName().then((name) => {

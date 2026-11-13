@@ -3,20 +3,31 @@ import os from 'node:os';
 /** Plăci de rețea virtuale (mașini virtuale, WSL, Docker, VPN): IP-urile lor nu sunt în Wi-Fi-ul de acasă. */
 const VIRTUAL = /vethernet|virtualbox|vmware|wsl|hyper-v|docker|loopback|tailscale|vpn|zerotier|utun|bridge/i;
 
-/** IP-uri private (RFC 1918) folosite în rețelele de acasă. */
-const isPrivate = (ip: string) => /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip);
+/** Rețelele obișnuite de acasă. 172.16–31.x.x lipsește intenționat: acolo stau de obicei mașinile virtuale. */
+const isHomeRange = (ip: string) => /^(10\.|192\.168\.)/.test(ip);
+
+/** Toate IPv4-urile calculatorului, cu numele plăcii de rețea. */
+function localIpv4(): { name: string; address: string }[] {
+  const out: { name: string; address: string }[] = [];
+  for (const [name, list] of Object.entries(os.networkInterfaces())) {
+    for (const a of list ?? []) if (a.family === 'IPv4' && !a.internal) out.push({ name, address: a.address });
+  }
+  return out;
+}
 
 /**
- * IP-urile calculatorului în rețeaua locală (Wi-Fi sau cablu), cele de forma 192.168.x.x primele.
- * Le arată panoul, ca streamerul să știe ce să scrie în aplicația de telefon.
+ * IP-urile calculatorului în rețeaua de acasă, pe care se deschide intrarea pentru telefon.
+ * - WIFI_IP=192.168.1.13 în .env fixează adresa (trebuie să fie chiar a calculatorului);
+ * - altfel le găsim singuri: 192.168.x.x / 10.x.x.x, fără plăcile virtuale (VPN, mașini virtuale), 192.168 primele.
  */
-export function homeAddresses(): string[] {
-  const found: string[] = [];
-  for (const [name, list] of Object.entries(os.networkInterfaces())) {
-    if (VIRTUAL.test(name)) continue;
-    for (const a of list ?? []) {
-      if (a.family === 'IPv4' && !a.internal && isPrivate(a.address)) found.push(a.address);
-    }
+export function homeAddresses(fixed = (process.env.WIFI_IP ?? '').trim()): string[] {
+  const all = localIpv4();
+  if (fixed) {
+    if (all.some((a) => a.address === fixed)) return [fixed];
+    console.warn(`[wifi] WIFI_IP=${fixed} nu e o adresă a acestui calculator; o caut singur.`);
   }
-  return found.sort((a, b) => Number(b.startsWith('192.168.')) - Number(a.startsWith('192.168.')));
+  return all
+    .filter((a) => !VIRTUAL.test(a.name) && isHomeRange(a.address))
+    .map((a) => a.address)
+    .sort((a, b) => Number(b.startsWith('192.168.')) - Number(a.startsWith('192.168.')));
 }

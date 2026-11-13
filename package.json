@@ -11,7 +11,8 @@
     "dev": "concurrently -k -n server,game -c cyan,magenta \"npm run dev -w server\" \"npm run dev -w game\"",
     "test": "vitest run",
     "typecheck": "tsc -p server --noEmit && tsc -p game --noEmit",
-    "apk": "node scripts/build-apk.mjs"
+    "apk": "node scripts/build-apk.mjs",
+    "video": "node tools/video/record.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

@@ -10,3 +10,6 @@ data/
 # Aplicația de telefon: build-ul jocului pentru APK și APK-urile construite (pachete de livrare)
 game/dist-app/
 release/
+
+# Videoclipuri randate cu tools/video (fișiere mari, nu intră în git)
+videos/

@@ -289,6 +289,33 @@ Dacă jocul se mișcă greu pe telefon în timpul live-ului (telefonul deseneaz�
 
 Zona de joc utilă e între 10% și 65% din înălțime: sus e bara TikTok, iar jos sunt comentariile și cadourile. Cu `?debug=1` vezi exact aceste zone.
 
+## Videoclipuri de prezentare
+
+`tools/video` filmează jocul „ca pe un LIVE”: deasupra jocului apare o interfață generică de LIVE (bara de sus, chatul, cadourile, inimioarele), iar o persoană urmărită (Mara / Mia) își tastează comenzile în căsuța de comentarii. Videoclipurile ies verticale, 1080×1920, 30 de cadre pe secundă, fără sunet.
+
+Ai nevoie de `npm run dev` pornit, de Chrome sau Edge și de `ffmpeg` în PATH.
+
+```bash
+npm run video
+```
+
+```bash
+npm run video -- survival-en vote-pvp-en
+```
+
+| Scenariu | Limba | Ce se vede |
+|---|---|---|
+| `survival` | română | lobby, apoi Survival: chatul apără cristalul, cadouri tot mai mari |
+| `vot-pvp` | română | rezultatele unei runde Boss Slayer, votul chatului, apoi Sus vs Jos |
+| `survival-en` | engleză | același Survival, cu jocul, chatul și comenzile în engleză (`up`, `left`…) |
+| `vote-pvp-en` | engleză | votul, apoi Top vs Bottom (`team up` / `team down`) |
+
+- Fișierele ies în `videos/` (nu intră în git).
+- Pagina filmată nu se conectează la server, deci nu încurcă jocul tău deschis.
+- Timpul jocului avansează cadru cu cadru, așa că videoclipul e fluid chiar dacă randarea durează ~2 minute.
+- Cine scrie, ce scrie și când stă în `tools/video/scenarios.mjs`. Textele din chat, numele și replicile persoanei urmărite sunt grupate pe limbă (`TEXT.ro`, `TEXT.en`). Totul pornește dintr-o sămânță fixă, deci fiecare randare iese la fel.
+- Opțiuni: `--base=http://localhost:5180`, `--out=videos`, `--fps=30`.
+
 ## Configurare și balans
 
 - `.env`: plafonul de caractere (`MAX_ACTIVE`), username-ul TikTok, modul simulator, cheia opțională Euler Stream, porturile, Wi-Fi-ul de acasă (`WIFI`), limba și „doar urmăritorii” (valorile de pornire).

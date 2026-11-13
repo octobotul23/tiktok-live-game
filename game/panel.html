@@ -42,13 +42,17 @@
           <dt data-i18n="panel.queued">În coadă</dt><dd id="st-queued">–</dd>
           <dt>FPS</dt><dd id="st-fps">–</dd>
         </dl>
+        <dl class="state">
+          <dt data-i18n="panel.screens">Ecrane</dt><dd id="st-screens">–</dd>
+        </dl>
+        <p class="hint"><span data-i18n="panel.phoneAddress">Adresa pentru aplicația de pe telefon:</span> <code id="phone-address">–</code></p>
         <div class="row">
           <button id="btn-debug" data-i18n="panel.toggleZones">Arată / ascunde zonele (F2)</button>
         </div>
         <p class="hint"><span data-i18n="panel.obsHint">Pentru OBS (1080×1920):</span> <code id="obs-url"></code></p>
       </section>
 
-      <section class="card">
+      <section class="card has-version">
         <h2 data-i18n="panel.settings">Setări joc</h2>
         <div class="row">
           <label for="set-lang" data-i18n="panel.language">Limba</label>
@@ -60,6 +64,13 @@
         <label class="toggle"><input type="checkbox" id="set-followers" /> <span data-i18n="panel.followersOnly">Doar urmăritorii (followers) pot intra în joc</span></label>
         <label class="toggle"><input type="checkbox" id="set-gifters" /> <span data-i18n="panel.giftersBypass">Cine trimite un cadou intră oricum</span></label>
         <p class="hint" data-i18n="panel.followersHint"></p>
+        <div class="slider">
+          <label for="set-max" data-i18n="panel.maxActive">Caractere pe ecran (max)</label>
+          <input type="range" id="set-max" min="20" max="1000" step="10" />
+          <output id="out-max"></output>
+        </div>
+        <p class="hint" data-i18n="panel.maxActiveHint"></p>
+        <small id="app-version" class="version"></small>
       </section>
 
       <section class="card">

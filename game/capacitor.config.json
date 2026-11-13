@@ -1,0 +1,13 @@
+{
+  "appId": "ro.livegame.app",
+  "appName": "Live Game",
+  "webDir": "dist-app",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#0c1024"
+  }
+}

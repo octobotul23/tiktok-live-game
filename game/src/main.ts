@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { HEIGHT, WIDTH } from './config/config';
+import { setupConnectScreen } from './app/ConnectScreen';
+import { IS_APP } from './net/serverAddress';
 import { BootScene } from './scenes/BootScene';
 import { GameScene, TRANSPARENT } from './scenes/GameScene';
 
@@ -18,3 +20,6 @@ const game = new Phaser.Game({
 
 // Cu ?debug=1, jocul e accesibil din consola browserului (măsurători, teste).
 if (new URLSearchParams(location.search).get('debug') === '1') (window as unknown as { game: Phaser.Game }).game = game;
+
+// În aplicația de telefon: ecranul de conectare la calculator (adresa serverului).
+if (IS_APP) setupConnectScreen();

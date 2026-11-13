@@ -18,6 +18,28 @@ export interface GameSettings {
   followersOnly: boolean;
   /** Cu followersOnly: cine trimite un cadou intră oricum. */
   giftersBypass: boolean;
+  /** Câte caractere pot fi pe ecran deodată; restul stau la coadă. Pe telefon ajută o valoare mai mică. */
+  maxActive: number;
+}
+
+/** Limitele pentru maxActive (serverul le impune, panoul le folosește la slider). */
+export const MAX_ACTIVE_RANGE = { min: 20, max: 1000 } as const;
+
+export interface ServerInfo {
+  /** Ce scrii în aplicația de telefon (ex. „pc.tailnet.ts.net:5180”); null dacă Tailscale nu e pornit. */
+  phoneAddress: string | null;
+  version: string;
+  /** Când a pornit serverul, ISO. */
+  startedAt: string;
+}
+
+/** Ce fel de ecran afișează jocul: aplicația de pe telefon sau o pagină de browser (OBS). */
+export interface ScreenInfo {
+  platform: 'android' | 'web';
+  /** Versiunea jocului de pe acel ecran, ex. „0.0.3”. */
+  version: string;
+  /** Data construirii, ISO (ex. „2026-11-13T10:20:00Z”). */
+  builtAt: string;
 }
 
 export type LiveEvent =
@@ -97,13 +119,17 @@ export type ControlMsg =
 
 /** Plicul fiecărui mesaj WebSocket. */
 export type WireMsg =
-  | { kind: 'hello'; role: 'game' | 'panel' }
+  | { kind: 'hello'; role: 'game' | 'panel'; screen?: ScreenInfo }
   | { kind: 'event'; event: LiveEvent }
   | { kind: 'status'; status: SourceStatus }
   | { kind: 'control'; msg: ControlMsg }
   | { kind: 'state'; state: GameState }
   | { kind: 'sim'; settings: SimSettings }
   | { kind: 'settings'; settings: GameSettings }
-  | { kind: 'tiktok'; status: TikTokStatus };
+  | { kind: 'tiktok'; status: TikTokStatus }
+  /** Ecranele de joc conectate acum (telefon, OBS); serverul le trimite panoului la fiecare schimbare. */
+  | { kind: 'screens'; screens: ScreenInfo[] }
+  /** Despre server, pentru panou: ce să scrii în aplicația de telefon și ce versiune rulează. */
+  | { kind: 'serverInfo'; info: ServerInfo };
 
 export const WS_PATH = '/ws';

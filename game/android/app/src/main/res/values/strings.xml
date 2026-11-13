@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Live Game</string>
+    <string name="title_activity_main">Live Game</string>
+    <string name="package_name">ro.livegame.app</string>
+    <string name="custom_url_scheme">ro.livegame.app</string>
+    <string name="back_again_to_exit">Apasă încă o dată „Înapoi” ca să închizi jocul</string>
+</resources>

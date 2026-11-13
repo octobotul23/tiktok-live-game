@@ -1,5 +1,5 @@
 import { GIFT_CATALOG } from '../../../shared/gifts';
-import type { ControlMsg, GameSettings, GameState, LiveEvent, SimSettings, TikTokStatus, WireMsg } from '../../../shared/protocol';
+import { MAX_ACTIVE_RANGE, type ControlMsg, type GameSettings, type GameState, type LiveEvent, type ScreenInfo, type ServerInfo, type SimSettings, type TikTokStatus, type WireMsg } from '../../../shared/protocol';
 import { onLangChange, setLang, t, type StringKey } from '../i18n';
 import { ServerLink } from '../net/ServerLink';
 
@@ -22,6 +22,8 @@ function applyI18n(): void {
   document.title = t('panel.title');
   modeKey = ''; // butoanele de mod au „tasta n”, se refac
   renderTikTok();
+  renderScreens();
+  renderServerInfo();
   if (lastState) renderState(lastState);
 }
 onLangChange((lang) => {
@@ -41,12 +43,54 @@ $<HTMLInputElement>('set-gifters').addEventListener('change', (ev) => {
   setSettings({ giftersBypass: (ev.target as HTMLInputElement).checked });
 });
 
+const maxInput = $<HTMLInputElement>('set-max');
+maxInput.min = String(MAX_ACTIVE_RANGE.min);
+maxInput.max = String(MAX_ACTIVE_RANGE.max);
+let maxTimer: ReturnType<typeof setTimeout> | undefined;
+maxInput.addEventListener('input', () => {
+  $('out-max').textContent = maxInput.value;
+  clearTimeout(maxTimer);
+  maxTimer = setTimeout(() => setSettings({ maxActive: Number(maxInput.value) }), 200);
+});
+
 function applyGameSettings(s: GameSettings): void {
+  if (document.activeElement !== maxInput) {
+    maxInput.value = String(s.maxActive);
+    $('out-max').textContent = String(s.maxActive);
+  }
   $<HTMLSelectElement>('set-lang').value = s.lang;
   $<HTMLInputElement>('set-followers').checked = s.followersOnly;
   $<HTMLInputElement>('set-gifters').checked = s.giftersBypass;
   $<HTMLInputElement>('set-gifters').disabled = !s.followersOnly;
   setLang(s.lang);
+}
+
+// --- ecrane și server ---------------------------------------------------------------
+let screens: ScreenInfo[] = [];
+let serverInfo: ServerInfo | null = null;
+const fmtDate = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '?' : d.toLocaleDateString('ro-RO');
+};
+
+function renderScreens(): void {
+  $('st-screens').textContent = screens.length
+    ? screens
+        .map((sc) =>
+          sc.platform === 'android'
+            ? t('panel.screenAndroid', { v: sc.version, date: fmtDate(sc.builtAt) })
+            : t('panel.screenWeb', { v: sc.version }),
+        )
+        .join('\n')
+    : t('panel.screenNone');
+}
+
+function renderServerInfo(): void {
+  const addr = $('phone-address');
+  addr.textContent = serverInfo ? (serverInfo.phoneAddress ?? t('panel.phoneAddressNone')) : '–';
+  $('app-version').textContent = serverInfo
+    ? t('panel.version', { v: serverInfo.version, date: fmtDate(serverInfo.startedAt) })
+    : '';
 }
 
 // --- TikTok LIVE -------------------------------------------------------------------
@@ -226,6 +270,14 @@ function onMessage(msg: WireMsg): void {
       break;
     case 'tiktok':
       applyTikTok(msg.status);
+      break;
+    case 'screens':
+      screens = msg.screens;
+      renderScreens();
+      break;
+    case 'serverInfo':
+      serverInfo = msg.info;
+      renderServerInfo();
       break;
     case 'settings':
       applyGameSettings(msg.settings);

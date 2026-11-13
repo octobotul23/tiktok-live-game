@@ -1,7 +1,8 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
-import type { GameSettings } from '../../shared/protocol';
+import { MAX_ACTIVE_RANGE, type GameSettings } from '../../shared/protocol';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 dotenv.config({ path: path.join(rootDir, '.env'), quiet: true });
@@ -12,8 +13,13 @@ const flag = (name: string, fallback: boolean) => {
   return v === '' ? fallback : v === 'true' || v === '1' || v === 'da' || v === 'yes';
 };
 
+const rootPkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')) as { version?: string };
+
 export const SERVER_CONFIG = {
   rootDir,
+  version: rootPkg.version ?? '0.0.0',
+  // Portul paginii de joc; `tailscale serve --https=5180` îl publică cu același număr pentru telefon.
+  gamePort: Number(process.env.GAME_PORT ?? 5180),
   port: Number(process.env.SERVER_PORT ?? 8790),
   tiktokUsername: username,
   // Fără username nu avem la ce să ne conectăm, deci simulatorul pornește oricum.
@@ -31,5 +37,11 @@ export const SERVER_CONFIG = {
     lang: (process.env.GAME_LANG ?? '').trim().toLowerCase() === 'en' ? 'en' : 'ro',
     followersOnly: flag('FOLLOWERS_ONLY', false),
     giftersBypass: flag('GIFTERS_BYPASS', true),
+    maxActive: clampMaxActive(Number(process.env.MAX_ACTIVE) || 300),
   } satisfies GameSettings as GameSettings,
 };
+
+/** Plafonul de caractere, întreg și în limitele permise. */
+export function clampMaxActive(n: number): number {
+  return Math.round(Math.min(MAX_ACTIVE_RANGE.max, Math.max(MAX_ACTIVE_RANGE.min, n)));
+}

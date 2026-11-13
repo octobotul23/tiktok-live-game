@@ -4,3 +4,7 @@ dist/
 logs/
 *.log
 .DS_Store
+
+# Aplicația de telefon: build-ul jocului pentru APK și APK-urile construite (pachete de livrare)
+game/dist-app/
+release/

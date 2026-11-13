@@ -17,6 +17,7 @@ Specificația completă și deciziile luate sunt în [docs/SPEC.md](docs/SPEC.md
 | 3 | PvP Sus vs Jos, cadouri per mod | ✅ gata de testat |
 | 4 | Restul modurilor, câte unul | în lucru: Tower Defense ✅ gata de testat |
 | 5 | Conectare la TikTok LIVE real | ✅ gata de testat (cere un LIVE real) |
+| + | Aplicația de telefon (APK), live din telefon | ✅ gata de testat pe Samsung |
 
 ## Instalare pe Mac
 
@@ -180,6 +181,62 @@ tailscale serve --bg --https=5180 http://127.0.0.1:5180
 
 Apoi deschide `https://<calculator>.<tailnet>.ts.net:5180/` (jocul) și `…:5180/panel.html` (panoul). Se oprește cu `tailscale serve --https=5180 off`. Setarea rămâne activă și după repornirea calculatorului, cât timp rulează `npm run dev`.
 
+## Aplicația de telefon (live din telefon)
+
+Jocul poate rula și ca aplicație pe un telefon Android (testat pentru Samsung). Faci LIVE din aplicația TikTok cu **partajarea ecranului** (LIVE de tip joc pe mobil), iar jocul rulează în aplicația noastră. Serverul și panoul rămân pe calculator (Windows sau Mac, la fel): de acolo controlezi jocul în timp real, fără să atingi telefonul.
+
+```
+TikTok LIVE ──► server pe calculator (npm run dev) ──Tailscale──► aplicația de pe telefon (jocul)
+                       ▲
+                 panoul (browser pe calculator)
+```
+
+### O singură dată: pregătirea
+
+1. **Tailscale** pornit pe calculator și pe telefon (aplicația Tailscale din Play Store), în același cont.
+2. Pe calculator, publică jocul în rețeaua Tailscale (rămâne setat și după repornire):
+   ```bash
+   tailscale serve --bg --https=5180 http://127.0.0.1:5180
+   ```
+3. Pentru construirea APK-ului: **Java 21** și **Android SDK** (doar pe calculatorul pe care construiești).
+   - Windows: JDK-ul Microsoft în `%LOCALAPPDATA%\Programs\jdk21` și SDK-ul în `%LOCALAPPDATA%\Android\Sdk` (așa e instalat acum pe calculatorul ăsta).
+   - Mac: `brew install openjdk@21` și Android SDK în `~/Library/Android/sdk` (cel mai simplu: instalezi Android Studio, care îl pune acolo).
+   - Dacă le ai în altă parte, setează `JAVA_HOME` și `ANDROID_HOME`.
+
+### Construirea APK-ului
+
+```bash
+npm run apk
+```
+
+Scriptul crește versiunea (din `package.json`, ex. 0.0.1 → 0.0.2), construiește jocul și pune aplicația în `release/LiveGame-v0.0.2.apk`. Folderul `release/` nu se urcă pe git.
+
+### Instalarea pe Samsung
+
+1. Copiază APK-ul pe telefon: cablu USB, Google Drive, sau direct prin Tailscale: `tailscale file cp release/LiveGame-v0.0.2.apk <telefon>:` (apare în notificări pe telefon).
+2. Deschide fișierul pe telefon. Prima dată, Android cere voie să instaleze aplicații din sursa respectivă (ex. „Fișierele mele” sau Chrome): **Setări → Permite din această sursă**.
+3. Dacă Play Protect avertizează că aplicația nu e cunoscută, alege **Instalează oricum**: e aplicația ta, nesemnată de Google Play.
+
+La o versiune nouă instalezi peste cea veche; adresa salvată rămâne. Dacă schimbi calculatorul pe care construiești (ex. treci pe Mac), Android poate refuza instalarea peste aplicația veche (semnătura de test diferă). Atunci dezinstalează aplicația veche întâi.
+
+### Folosirea
+
+1. Pe calculator: `npm run dev` și panoul (http://localhost:5180/panel.html). În cardul **Joc** vezi **Adresa pentru aplicația de pe telefon** (ex. `pc.tailnet.ts.net:5180`).
+2. Pe telefon: deschide **Live Game**. Prima dată scrie adresa de mai sus și apasă **Conectează**. Data viitoare se conectează singur.
+3. În panou, la **Ecrane**, apare „📱 telefon (aplicația) v0.0.2”. Tot ce schimbi în panou (setări, mod, simulator, TikTok) ajunge imediat pe telefon.
+4. Pornește LIVE în TikTok cu partajarea ecranului, apoi treci în **Live Game** și lasă telefonul așa. Comentariile le vezi în fereastra mică a TikTok.
+
+În aplicație:
+- ecranul nu se stinge, iar barele sistemului sunt ascunse;
+- **Înapoi** cere două apăsări, ca să nu închizi jocul din greșeală;
+- **ecranul de conectare** se redeschide atingând de **5 ori, repede, colțul din stânga sus** (gest ascuns). Nu apare singur în timpul live-ului, nici dacă se pierde legătura, ca să nu-l vadă spectatorii. Starea o vezi în panou.
+
+Dacă jocul se mișcă greu pe telefon în timpul live-ului (telefonul desenează jocul și filmează ecranul în același timp), scade **Caractere pe ecran (max)** din panou, la **Setări joc**. Schimbarea se aplică imediat.
+
+**Mutarea serverului pe Mac:** pe Mac instalezi Node.js și Tailscale, copiezi proiectul (plus `.env`), rulezi `npm install`, `tailscale serve` (pasul 2) și `npm run dev`. Panoul de pe Mac îți arată noua adresă. Pe telefon o schimbi din ecranul de conectare (gestul ascuns). Același APK merge cu orice calculator.
+
+**Cerințe TikTok:** LIVE-ul cu partajarea ecranului are cerințe de cont (vârsta și, în multe țări, un număr minim de urmăritori). Verifică în aplicația TikTok dacă ai opțiunea.
+
 ## Adăugarea în OBS (1080×1920)
 
 1. Pornește jocul cu `npm run dev`.
@@ -196,7 +253,7 @@ Zona de joc utilă e între 10% și 65% din înălțime: sus e bara TikTok, iar 
 
 ## Configurare și balans
 
-- `.env`: username-ul TikTok, modul simulator, cheia opțională Euler Stream, porturile, limba și „doar urmăritorii” (valorile de pornire).
+- `.env`: plafonul de caractere (`MAX_ACTIVE`), username-ul TikTok, modul simulator, cheia opțională Euler Stream, porturile, limba și „doar urmăritorii” (valorile de pornire).
 - `game/src/config/config.ts`: plafonul de caractere (300), despawn-ul (90 s), dash-ul, duratele rundelor, combatul (rază, cooldown, damage), like-urile, XP-ul și balansul fiecărui mod (`survival`, `boss`).
 
 ## Maparea cadourilor

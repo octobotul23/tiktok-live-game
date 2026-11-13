@@ -65,7 +65,7 @@ export class GameScene extends Phaser.Scene {
   private likesTotal = 0;
   private serverOnline = false;
   /** Vin de la server la conectare și când se schimbă din panou. */
-  private settings: GameSettings = { lang: 'ro', followersOnly: false, giftersBypass: true };
+  private settings: GameSettings = { lang: 'ro', followersOnly: false, giftersBypass: true, maxActive: CONFIG.crowd.maxActive };
   private lastFollowHint = 0;
   /** Rândurile ultimului ecran de rezultate, ca să-l putem redesena în altă limbă. */
   private lastResultRows: ResultRow[] = [];
@@ -251,6 +251,9 @@ export class GameScene extends Phaser.Scene {
   private applySettings(next: GameSettings): void {
     const prev = this.settings;
     this.settings = { ...next };
+    // Plafonul vine din panou; `?max=` în URL are prioritate (teste de performanță).
+    // Dacă scade, caracterele în plus nu dispar brusc: ies singure la inactivitate, iar coada așteaptă.
+    if (!params.has('max') && Number.isFinite(next.maxActive)) CONFIG.crowd.maxActive = next.maxActive;
     if (next.followersOnly && (!prev.followersOnly || prev.giftersBypass !== next.giftersBypass)) this.enforceFollowersOnly();
     if (next.lang !== prev.lang) setLang(next.lang); // anunță refreshTexts
     else this.refreshTexts();

@@ -1,7 +1,10 @@
 import { GIFT_CATALOG } from '../../../shared/gifts';
-import { MAX_ACTIVE_RANGE, type ControlMsg, type GameSettings, type GameState, type LiveEvent, type ScreenInfo, type ServerInfo, type SimSettings, type TikTokStatus, type WireMsg } from '../../../shared/protocol';
+import { MAX_ACTIVE_RANGE, type ControlMsg, type GameSettings, type GameState, type LiveEvent, type ScreenInfo, type ServerInfo, type TikTokStatus, type WireMsg } from '../../../shared/protocol';
 import { onLangChange, setLang, t, type StringKey } from '../i18n';
 import { ServerLink } from '../net/ServerLink';
+import { setupBots } from './bots';
+import { numberControl } from './controls';
+import { setupViews } from './views';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const MAX_LOG = 80;
@@ -18,6 +21,10 @@ function applyI18n(): void {
   for (const el of document.querySelectorAll<HTMLElement>('[data-i18n]')) el.textContent = t(el.dataset.i18n as StringKey);
   for (const el of document.querySelectorAll<HTMLInputElement>('[data-i18n-placeholder]')) {
     el.placeholder = t(el.dataset.i18nPlaceholder as StringKey);
+  }
+  for (const el of document.querySelectorAll<HTMLElement>('[data-i18n-title]')) {
+    el.title = t(el.dataset.i18nTitle as StringKey);
+    el.setAttribute('aria-label', el.title);
   }
   document.title = t('panel.title');
   modeKey = ''; // butoanele de mod au „tasta n”, se refac
@@ -43,21 +50,24 @@ $<HTMLInputElement>('set-gifters').addEventListener('change', (ev) => {
   setSettings({ giftersBypass: (ev.target as HTMLInputElement).checked });
 });
 
-const maxInput = $<HTMLInputElement>('set-max');
-maxInput.min = String(MAX_ACTIVE_RANGE.min);
-maxInput.max = String(MAX_ACTIVE_RANGE.max);
+// Câte caractere pot fi pe ecran: slider + căsuță pentru cifra exactă.
 let maxTimer: ReturnType<typeof setTimeout> | undefined;
-maxInput.addEventListener('input', () => {
-  $('out-max').textContent = maxInput.value;
-  clearTimeout(maxTimer);
-  maxTimer = setTimeout(() => setSettings({ maxActive: Number(maxInput.value) }), 200);
+const maxControl = numberControl({
+  id: 'set-max',
+  min: MAX_ACTIVE_RANGE.min,
+  max: MAX_ACTIVE_RANGE.max,
+  step: 1,
+  labelKey: 'panel.maxActive',
+  hintKey: 'panel.maxActiveHint',
+  onChange: (value) => {
+    clearTimeout(maxTimer);
+    maxTimer = setTimeout(() => setSettings({ maxActive: value }), 200);
+  },
 });
+$('set-max-box').replaceWith(maxControl.el);
 
 function applyGameSettings(s: GameSettings): void {
-  if (document.activeElement !== maxInput) {
-    maxInput.value = String(s.maxActive);
-    $('out-max').textContent = String(s.maxActive);
-  }
+  maxControl.set(s.maxActive);
   $<HTMLSelectElement>('set-lang').value = s.lang;
   $<HTMLInputElement>('set-followers').checked = s.followersOnly;
   $<HTMLInputElement>('set-gifters').checked = s.giftersBypass;
@@ -147,42 +157,8 @@ setInterval(() => {
   if (ttRetryAt) renderTikTok();
 }, 1000);
 
-// --- simulator ---------------------------------------------------------------
-const sliders: { id: string; out: string; key: keyof SimSettings }[] = [
-  { id: 'sim-viewers', out: 'out-viewers', key: 'viewers' },
-  { id: 'sim-comments', out: 'out-comments', key: 'commentsPerSec' },
-  { id: 'sim-likes', out: 'out-likes', key: 'likesPerSec' },
-  { id: 'sim-gifts', out: 'out-gifts', key: 'giftsPerMin' },
-  { id: 'sim-follower-pct', out: 'out-follower-pct', key: 'followerPct' },
-  { id: 'sim-follows', out: 'out-follows', key: 'followsPerMin' },
-];
-
-let sendTimer: ReturnType<typeof setTimeout> | undefined;
-const pending: Partial<SimSettings> = {};
-
-for (const s of sliders) {
-  const input = $<HTMLInputElement>(s.id);
-  input.addEventListener('input', () => {
-    $(s.out).textContent = input.value;
-    (pending as Record<string, number>)[s.key] = Number(input.value);
-    clearTimeout(sendTimer);
-    sendTimer = setTimeout(() => control({ type: 'sim:set', settings: { ...pending } }), 120);
-  });
-}
-
-$<HTMLInputElement>('sim-enabled').addEventListener('change', (ev) => {
-  control({ type: 'sim:set', settings: { enabled: (ev.target as HTMLInputElement).checked } });
-});
-
-function applySimSettings(s: SimSettings): void {
-  $<HTMLInputElement>('sim-enabled').checked = s.enabled;
-  for (const def of sliders) {
-    const input = $<HTMLInputElement>(def.id);
-    if (document.activeElement === input) continue;
-    input.value = String(s[def.key]);
-    $(def.out).textContent = String(s[def.key]);
-  }
-}
+// --- boți (simulator) -------------------------------------------------------
+const applySimSettings = setupBots($('bot-groups').closest('section')!, (settings) => control({ type: 'sim:set', settings }));
 
 // --- cadouri -------------------------------------------------------------------
 const giftBox = $('gift-buttons');
@@ -352,5 +328,6 @@ function setPill(id: string, on: boolean): void {
   el.classList.toggle('off', !on);
 }
 
+setupViews($('views'));
 applyI18n();
 link.connect();

@@ -1,5 +1,6 @@
 // Mesajele care circulă prin WebSocket între server, joc și panou.
 // Jocul nu știe dacă un eveniment vine din TikTok sau din simulator: ambele produc LiveEvent.
+import type { SimSettings } from './sim';
 
 export interface Viewer {
   userId: string;
@@ -72,17 +73,7 @@ export interface TikTokStatus {
   viewers?: number;
 }
 
-export interface SimSettings {
-  enabled: boolean;
-  viewers: number; // 0–1000 spectatori falși
-  commentsPerSec: number;
-  likesPerSec: number;
-  giftsPerMin: number;
-  /** Procentul de spectatori falși care sunt deja urmăritori (0–100). */
-  followerPct: number;
-  /** Câți spectatori falși dau follow pe minut, în timpul live-ului. */
-  followsPerMin: number;
-}
+export type { SimSettings } from './sim';
 
 export type GamePhase = 'sandbox' | 'lobby' | 'playing' | 'results' | 'vote';
 

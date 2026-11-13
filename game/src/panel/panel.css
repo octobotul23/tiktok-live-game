@@ -29,7 +29,7 @@ header {
 }
 
 h1 { font-size: 18px; margin: 0; }
-h2 { font-size: 13px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+h2 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 
 main {
   display: grid;
@@ -50,9 +50,17 @@ main {
 .state dt { color: var(--muted); }
 .state dd { margin: 0; font-variant-numeric: tabular-nums; }
 
-.slider { display: grid; grid-template-columns: 140px 1fr 56px; align-items: center; gap: 10px; margin: 10px 0; }
-.slider output { text-align: right; font-variant-numeric: tabular-nums; }
 input[type='range'] { width: 100%; accent-color: var(--accent); }
+
+/* Câmp numeric: eticheta deasupra, apoi slider + căsuța cu cifra exactă (controls.ts). */
+.field { margin: 12px 0 0; }
+.field > label { display: block; margin-bottom: 4px; }
+.field-input { display: grid; grid-template-columns: 1fr 84px 34px; align-items: center; gap: 8px; }
+.field-input select { grid-column: 1 / -1; }
+.field-input input[type='number'] { width: 100%; text-align: right; font-variant-numeric: tabular-nums; }
+.field-input input.bad { border-color: #e5484d; }
+.field .unit { color: var(--muted); font-size: 12px; }
+.field .hint { margin-top: 4px; }
 
 .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
 .grow { flex: 1; min-width: 120px; }
@@ -112,3 +120,42 @@ code { background: #11152a; padding: 2px 6px; border-radius: 6px; }
 .card.has-version { position: relative; padding-bottom: 28px; }
 .version { position: absolute; right: 12px; bottom: 8px; font-size: 11px; color: var(--muted); opacity: 0.8; }
 #st-screens { white-space: pre-line; }
+
+/* Bara cu panouri: „Toate” sau doar cele alese (views.ts). Rămâne sus când derulezi. */
+.views {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.chip { padding: 5px 12px; border-radius: 999px; font-size: 13px; background: #11152a; }
+.chip.on { background: rgba(255, 45, 85, 0.18); border-color: var(--accent); }
+
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.popout { padding: 2px 9px; font-size: 13px; line-height: 1.4; background: transparent; color: var(--muted); }
+.popout:hover { color: var(--text); }
+
+/* Cardul Boți: grupuri care se așază pe mai multe coloane când e loc. */
+.sub { font-size: 12px; margin: 14px 0 6px; color: var(--muted); font-weight: 600; }
+.presets button { min-width: 84px; }
+button.subtle { background: transparent; color: var(--muted); }
+.groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 14px; }
+.group { border: 1px solid var(--line); border-radius: 10px; padding: 4px 14px 14px; margin: 0; min-width: 0; }
+.group legend { padding: 0 6px; font-weight: 600; font-size: 13px; }
+.bots.off .groups { opacity: 0.55; }
+.card.bots { grid-column: span 2; }
+body.single .card { grid-column: 1 / -1; }
+
+@media (max-width: 720px) {
+  header, .views { padding-left: 12px; padding-right: 12px; }
+  /* Pe telefon: un singur rând de butoane, care se derulează cu degetul. */
+  .views { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .chip { flex: none; }
+  main { padding: 12px 12px 32px; grid-template-columns: 1fr; }
+  .card.bots { grid-column: auto; }
+}

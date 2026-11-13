@@ -17,9 +17,11 @@
         <span id="pill-game" class="pill off" data-i18n="panel.pillGame">joc</span>
       </div>
     </header>
+    <!-- Butoanele de deasupra: ce panouri se văd. Se construiesc din cardurile cu data-panel (views.ts). -->
+    <nav id="views" class="views" aria-label="Panouri"></nav>
 
     <main>
-      <section class="card">
+      <section class="card" data-panel="tiktok">
         <h2 data-i18n="panel.tiktok">TikTok LIVE</h2>
         <form id="tt-form" class="row">
           <label for="tt-user" data-i18n="panel.tiktokUser">Contul care e LIVE</label>
@@ -32,7 +34,7 @@
         <p class="hint" data-i18n="panel.tiktokHint"></p>
       </section>
 
-      <section class="card">
+      <section class="card" data-panel="game">
         <h2 data-i18n="panel.game">Joc</h2>
         <dl class="state">
           <dt data-i18n="panel.phase">Faza</dt><dd id="st-phase">–</dd>
@@ -53,7 +55,7 @@
         <p class="hint"><span data-i18n="panel.obsHint">Pentru OBS (1080×1920):</span> <code id="obs-url"></code></p>
       </section>
 
-      <section class="card has-version">
+      <section class="card has-version" data-panel="settings">
         <h2 data-i18n="panel.settings">Setări joc</h2>
         <div class="row">
           <label for="set-lang" data-i18n="panel.language">Limba</label>
@@ -65,16 +67,12 @@
         <label class="toggle"><input type="checkbox" id="set-followers" /> <span data-i18n="panel.followersOnly">Doar urmăritorii (followers) pot intra în joc</span></label>
         <label class="toggle"><input type="checkbox" id="set-gifters" /> <span data-i18n="panel.giftersBypass">Cine trimite un cadou intră oricum</span></label>
         <p class="hint" data-i18n="panel.followersHint"></p>
-        <div class="slider">
-          <label for="set-max" data-i18n="panel.maxActive">Caractere pe ecran (max)</label>
-          <input type="range" id="set-max" min="20" max="1000" step="10" />
-          <output id="out-max"></output>
-        </div>
+        <div id="set-max-box"></div>
         <p class="hint" data-i18n="panel.maxActiveHint"></p>
         <small id="app-version" class="version"></small>
       </section>
 
-      <section class="card">
+      <section class="card" data-panel="streamer">
         <h2 data-i18n="panel.streamer">Streamer</h2>
         <p class="hint" data-i18n="panel.streamerHint"></p>
         <div id="mode-buttons" class="grid"></div>
@@ -88,42 +86,18 @@
         </div>
       </section>
 
-      <section class="card">
-        <h2 data-i18n="panel.simulator">Simulator</h2>
-        <label class="toggle"><input type="checkbox" id="sim-enabled" /> <span data-i18n="panel.simOn">Pornit</span></label>
-        <div class="slider">
-          <label for="sim-viewers" data-i18n="panel.simViewers">Jucători falși</label>
-          <input type="range" id="sim-viewers" min="0" max="1000" step="10" />
-          <output id="out-viewers"></output>
-        </div>
-        <div class="slider">
-          <label for="sim-comments" data-i18n="panel.simComments">Comentarii / s</label>
-          <input type="range" id="sim-comments" min="0" max="200" step="1" />
-          <output id="out-comments"></output>
-        </div>
-        <div class="slider">
-          <label for="sim-likes" data-i18n="panel.simLikes">Like-uri / s</label>
-          <input type="range" id="sim-likes" min="0" max="50" step="1" />
-          <output id="out-likes"></output>
-        </div>
-        <div class="slider">
-          <label for="sim-gifts" data-i18n="panel.simGifts">Cadouri auto / min</label>
-          <input type="range" id="sim-gifts" min="0" max="60" step="1" />
-          <output id="out-gifts"></output>
-        </div>
-        <div class="slider">
-          <label for="sim-follower-pct" data-i18n="panel.simFollowerPct">% urmăritori</label>
-          <input type="range" id="sim-follower-pct" min="0" max="100" step="5" />
-          <output id="out-follower-pct"></output>
-        </div>
-        <div class="slider">
-          <label for="sim-follows" data-i18n="panel.simFollows">Follow-uri / min</label>
-          <input type="range" id="sim-follows" min="0" max="60" step="1" />
-          <output id="out-follows"></output>
-        </div>
+      <section class="card bots" data-panel="bots">
+        <h2 data-i18n="panel.simulator">Boți (simulator)</h2>
+        <label class="toggle"><input type="checkbox" id="sim-enabled" /> <span data-i18n="bots.enabled">Boții sunt porniți</span></label>
+        <p class="hint" data-i18n="bots.intro"></p>
+        <h3 class="sub" data-i18n="bots.presets">Stiluri gata făcute</h3>
+        <div id="bot-presets" class="row presets"></div>
+        <p class="hint" data-i18n="bots.presetsHint"></p>
+        <!-- Câmpurile vin din shared/sim.ts (bots.ts le construiește). -->
+        <div id="bot-groups" class="groups"></div>
       </section>
 
-      <section class="card">
+      <section class="card" data-panel="gifts">
         <h2 data-i18n="panel.gifts">Cadouri</h2>
         <div class="row">
           <label for="gift-count" data-i18n="panel.giftCount">Cantitate (serie)</label>
@@ -133,7 +107,7 @@
         <p class="hint" data-i18n="panel.giftHint"></p>
       </section>
 
-      <section class="card">
+      <section class="card" data-panel="chat">
         <h2 data-i18n="panel.testChat">Comentariu de test</h2>
         <form id="chat-form" class="row">
           <input id="chat-nick" data-i18n-placeholder="panel.nickPlaceholder" value="Streamer" />
@@ -146,7 +120,7 @@
         </div>
       </section>
 
-      <section class="card wide">
+      <section class="card wide" data-panel="events">
         <h2 data-i18n="panel.events">Evenimente</h2>
         <ol id="log" class="log"></ol>
       </section>

@@ -30,6 +30,8 @@ export const SERVER_CONFIG = {
   tiktokAutoConnect: (process.env.SIMULATE ?? 'true').toLowerCase() === 'false' && username !== '',
   // Cheie Euler Stream (opțională, gratuită pe eulerstream.com): ridică limitele de conectare. Stă doar în .env.
   tiktokSignApiKey: (process.env.TIKTOK_SIGN_API_KEY ?? '').trim(),
+  // Setările salvate din panou (ex. boții). DATA_DIR îl mută; folderul nu se urcă pe git.
+  dataDir: process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(rootDir, 'data'),
   // Jurnalele conexiunii TikTok (un fișier pe zi); folderul e în .gitignore.
   logDir: path.join(rootDir, 'logs'),
   // Cât așteptăm după ultimul eveniment dintr-o serie de cadouri fără repeatEnd înainte s-o închidem forțat.

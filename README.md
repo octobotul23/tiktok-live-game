@@ -51,8 +51,8 @@ Pornește serverul și jocul împreună. Apoi deschide:
 - **Jocul**: http://localhost:5180 (cu `?debug=1` vezi zonele sigure și FPS-ul)
 - **Panoul de control**: http://localhost:5180/panel.html (nu îl captura în OBS)
 
-Cu `SIMULATE=true` în `.env` (implicit), simulatorul generează spectatori falși. Din panou poți:
-- alege numărul de jucători falși (0–1000) și rata comentariilor, like-urilor și cadourilor automate;
+Cu `SIMULATE=true` în `.env` (implicit), boții (spectatori falși) pornesc singuri. Din panou poți:
+- regla boții în detaliu, în panoul **Boți (simulator)** (vezi mai jos);
 - trimite orice cadou (cele marcate ↻ vin în serie, ca pe TikTok);
 - scrie un comentariu de test, ca să verifici cum sunt înțelese comenzile (ca urmăritor sau nu), și simula un follow;
 - schimba limba (română / engleză) și porni „doar urmăritorii pot intra” (vezi mai jos);
@@ -60,7 +60,30 @@ Cu `SIMULATE=true` în `.env` (implicit), simulatorul generează spectatori fal�
 - vedea faza, modul curent și timpul rămas;
 - controla jocul din secțiunea **Streamer** (vezi mai jos).
 
-În faza de vot, simulatorul votează singur (în chat și cu cadouri de vot), ca să vezi barele mișcându-se.
+### Panouri separate
+
+Sus, sub titlu, e o bară cu câte un buton pentru fiecare panou (TikTok LIVE, Joc, Setări joc, Streamer, Boți, Cadouri, Comentariu de test, Evenimente):
+- **Toate** arată tot;
+- un clic pe un panou îl arată **doar pe el**; clicuri pe alte panouri le adaugă sau le scot; dacă le scoți pe toate, revii la **Toate**;
+- alegerea se ține minte în browser;
+- butonul **↗** din colțul fiecărui panou îl deschide singur într-o fereastră separată (de ex. boții pe un monitor, evenimentele pe altul). Aceeași fereastră o deschizi direct cu `panel.html?show=bots` (sau `?show=bots,events`); ferestrele astea nu schimbă alegerea din panoul principal. Numele panourilor: `tiktok`, `game`, `settings`, `streamer`, `bots`, `gifts`, `chat`, `events`.
+
+Pe telefon, bara e un singur rând care se derulează cu degetul.
+
+### Boții
+
+Fiecare setare are un slider (reglaj rapid) și o căsuță în care scrii cifra exactă (Enter sau clic în afară o aplică). Sub fiecare scrie ce face. Setările se salvează pe server, în `data/sim.json`, și rămân și după repornire (folderul `data/` nu se urcă pe git și nu se servește).
+
+| Grup | Ce reglezi |
+|------|-----------|
+| Stiluri gata făcute | **Liniște / Normal / Aglomerat / Haos** schimbă mai multe setări dintr-un clic; **Valorile de bază** le readuce pe cele inițiale. |
+| Câți boți | câți boți sunt în live (0–1000), cât de repede intră, câți pleacă pe minut (înlocuiți de alții noi), câți dintre ei scriu (restul doar privesc). |
+| Cât de activi | activitatea totală (100% = normal, 200% = dublu, 0% = tac toți), valuri (ritmul urcă și coboară), comentarii pe secundă, rafale de like-uri și câte like-uri într-o rafală. |
+| Ce scriu | cât de des scriu comenzi de mișcare, comenzile speciale ale modului, voturi; poți pune boții să **voteze mai ales o anumită opțiune**; câți țin cu echipa de sus în PvP. |
+| Cadouri | cadouri pe minut, **cel mai scump cadou** trimis singur, cât de lungă poate fi o serie, câte sunt cadouri de vot. |
+| Urmăritori | câți boți sunt deja urmăritori și câți dau follow pe minut. |
+
+În faza de vot, boții votează singuri (în chat și cu cadouri de vot), ca să vezi barele mișcându-se. Limitele și valorile de bază ale fiecărei setări sunt într-un singur loc, `shared/sim.ts`; panoul își construiește câmpurile de acolo.
 
 Alte opțiuni în URL-ul jocului:
 - `?mode=boss`: primul mod jucat după pornire (`survival`, `boss`; implicit `survival`);
@@ -141,7 +164,7 @@ Din tastatură (când pagina jocului are focus) sau din panou, secțiunea **Stre
 
 Textele sunt în `game/src/i18n/ro.ts` și `game/src/i18n/en.ts`. Dacă adaugi un text nou în `ro.ts` și uiți traducerea din `en.ts`, `npm run typecheck` îți arată unde lipsește.
 
-> Pe TikTok LIVE real, informația „urmărește / nu urmărește” vine de la TikTok, la fiecare comentariu, cadou sau intrare. În simulator vine din sliderul **% urmăritori**, bifa **e urmăritor** de la comentariul de test și butonul **Dă follow**.
+> Pe TikTok LIVE real, informația „urmărește / nu urmărește” vine de la TikTok, la fiecare comentariu, cadou sau intrare. În simulator vine din setarea **Câți sunt deja urmăritori** (panoul Boți), bifa **e urmăritor** de la comentariul de test și butonul **Dă follow**.
 
 ## Conectarea la TikTok LIVE
 

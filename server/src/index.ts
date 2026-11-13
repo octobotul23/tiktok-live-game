@@ -1,8 +1,11 @@
 import http from 'node:http';
+import path from 'node:path';
 import type { GameSettings, ServerInfo } from '../../shared/protocol';
 import { clampMaxActive, SERVER_CONFIG } from './config';
 import { Hub } from './hub';
+import { cleanSimPatch, simDefaults, type SimSettings } from '../../shared/sim';
 import { Simulator } from './sim/Simulator';
+import { debouncedSaver, loadJson } from './store';
 import { homeAddresses } from './network';
 import { openWifiEntry } from './wifiEntry';
 import { tailscaleDnsName } from './tailscale';
@@ -18,11 +21,19 @@ const hub = new Hub(server);
 const emit = hub.broadcastEvent.bind(hub);
 const simGifts = new GiftStreakCollapser(emit, SERVER_CONFIG.giftStreakTimeoutMs);
 
+const SIM_FILE = path.join(SERVER_CONFIG.dataDir, 'sim.json');
 const sim = new Simulator(
-  { enabled: SERVER_CONFIG.simulate, viewers: 40, commentsPerSec: 10, likesPerSec: 4, giftsPerMin: 3, followerPct: 70, followsPerMin: 4 },
+  // Valorile implicite, peste ele cele salvate din panou; „pornit” vine mereu din .env (SIMULATE).
+  { ...simDefaults(SERVER_CONFIG.simulate), ...cleanSimPatch(loadJson(SIM_FILE)), enabled: SERVER_CONFIG.simulate },
   emit,
   simGifts,
 );
+
+/** Setările boților se salvează pe disc (fără „pornit”), ca să rămână după o repornire. */
+const saveSim = debouncedSaver(SIM_FILE, () => {
+  const { enabled: _enabled, ...rest }: SimSettings = sim.settings;
+  return rest;
+});
 
 const publishSim = () => {
   hub.sendToPanels({ kind: 'sim', settings: sim.settings });
@@ -84,6 +95,7 @@ hub.onControl = (msg) => {
     case 'sim:set':
       sim.update(msg.settings);
       publishSim();
+      saveSim();
       return true;
     case 'sim:gift':
       sim.sendGift(msg.giftName, msg.count);

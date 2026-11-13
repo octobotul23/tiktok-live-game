@@ -2,6 +2,8 @@ node_modules/
 dist/
 .env
 logs/
+# Setările salvate din panou (date locale, nu se urcă pe git)
+data/
 *.log
 .DS_Store
 

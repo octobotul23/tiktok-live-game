@@ -21,6 +21,8 @@ export const SERVER_CONFIG = {
   // Portul paginii de joc; `tailscale serve --https=5180` îl publică cu același număr pentru telefon.
   gamePort: Number(process.env.GAME_PORT ?? 5180),
   port: Number(process.env.SERVER_PORT ?? 8790),
+  // WIFI=true: jocul se deschide și în rețeaua de acasă, ca telefonul să intre prin IP (fără Tailscale).
+  wifi: flag('WIFI', false),
   tiktokUsername: username,
   // Fără username nu avem la ce să ne conectăm, deci simulatorul pornește oricum.
   simulate: (process.env.SIMULATE ?? 'true').toLowerCase() !== 'false' || username === '',

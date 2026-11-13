@@ -3,6 +3,8 @@ import type { GameSettings, ServerInfo } from '../../shared/protocol';
 import { clampMaxActive, SERVER_CONFIG } from './config';
 import { Hub } from './hub';
 import { Simulator } from './sim/Simulator';
+import { homeAddresses } from './network';
+import { openWifiBridge } from './wifiBridge';
 import { tailscaleDnsName } from './tailscale';
 import { cleanUsername, TikTokConnector } from './tiktok/Connector';
 import { GiftStreakCollapser } from './tiktok/normalize';
@@ -47,7 +49,17 @@ const tiktok = new TikTokConnector({
 // Setările jocului stau aici, nu în pagina de joc: un refresh în OBS nu le pierde.
 const settings: GameSettings = { ...SERVER_CONFIG.game };
 
-const serverInfo: ServerInfo = { phoneAddress: null, version: SERVER_CONFIG.version, startedAt: new Date().toISOString() };
+const serverInfo: ServerInfo = {
+  phoneAddress: null,
+  wifiAddresses: SERVER_CONFIG.wifi ? homeAddresses().map((ip) => `${ip}:${SERVER_CONFIG.gamePort}`) : [],
+  version: SERVER_CONFIG.version,
+  startedAt: new Date().toISOString(),
+};
+if (SERVER_CONFIG.wifi) {
+  const ips = homeAddresses();
+  if (ips.length) openWifiBridge(ips, SERVER_CONFIG.gamePort);
+  else console.warn('[wifi] WIFI=true, dar nu găsesc calculatorul într-o rețea de acasă (192.168.x.x / 10.x.x.x).');
+}
 // Numele Tailscale al calculatorului: panoul îl arată ca adresă pentru aplicația de telefon.
 void tailscaleDnsName().then((name) => {
   if (name) hub.allowHost(name);

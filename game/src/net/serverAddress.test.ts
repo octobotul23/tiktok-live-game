@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSecureEnough, toWsUrl } from './serverAddress';
+import { isAllowedInApp, toWsUrl } from './serverAddress';
 
 describe('toWsUrl (adresa calculatorului din aplicația de telefon)', () => {
   it('numele Tailscale → wss, cu portul 5180 implicit', () => {
@@ -32,11 +32,22 @@ describe('toWsUrl (adresa calculatorului din aplicația de telefon)', () => {
   });
 });
 
-describe('isSecureEnough (aplicația cere legătură criptată)', () => {
-  it('wss și localhost trec, IP-ul necriptat nu', () => {
-    expect(isSecureEnough('wss://x237.tail36214d.ts.net:5180/ws')).toBe(true);
-    expect(isSecureEnough('ws://localhost:5180/ws')).toBe(true);
-    expect(isSecureEnough('ws://100.112.20.61:5180/ws')).toBe(false);
-    expect(isSecureEnough('ws://localhost.evil.com:5180/ws')).toBe(false);
+describe('isAllowedInApp (ce adrese acceptă aplicația)', () => {
+  it('wss (Tailscale), localhost și IP-urile de acasă trec', () => {
+    expect(isAllowedInApp('wss://x237.tail36214d.ts.net:5180/ws')).toBe(true);
+    expect(isAllowedInApp('ws://localhost:5180/ws')).toBe(true);
+    expect(isAllowedInApp('ws://192.168.1.20:5180/ws')).toBe(true);
+    expect(isAllowedInApp('ws://10.0.0.5:5180/ws')).toBe(true);
+    expect(isAllowedInApp('ws://172.20.1.2:5180/ws')).toBe(true);
+  });
+
+  it('ws:// necriptat spre internet nu trece', () => {
+    expect(isAllowedInApp('ws://100.112.20.61:5180/ws')).toBe(false);
+    expect(isAllowedInApp('ws://8.8.8.8:5180/ws')).toBe(false);
+    expect(isAllowedInApp('ws://172.32.0.1:5180/ws')).toBe(false);
+    expect(isAllowedInApp('ws://192.168.1.300:5180/ws')).toBe(false);
+    expect(isAllowedInApp('ws://pc.example.com:5180/ws')).toBe(false);
+    expect(isAllowedInApp('ws://localhost.evil.com:5180/ws')).toBe(false);
+    expect(isAllowedInApp('ws://192.168.1.20.evil.com:5180/ws')).toBe(false);
   });
 });

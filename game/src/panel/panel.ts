@@ -87,7 +87,12 @@ function renderScreens(): void {
 
 function renderServerInfo(): void {
   const addr = $('phone-address');
-  addr.textContent = serverInfo ? (serverInfo.phoneAddress ?? t('panel.phoneAddressNone')) : '–';
+  const wifi = serverInfo?.wifiAddresses ?? [];
+  addr.textContent = serverInfo
+    ? (serverInfo.phoneAddress ?? t(wifi.length ? 'panel.phoneAddressWifiOnly' : 'panel.phoneAddressNone'))
+    : '–';
+  $('wifi-hint').hidden = wifi.length === 0;
+  $('wifi-address').textContent = wifi.join(t('panel.or'));
   $('app-version').textContent = serverInfo
     ? t('panel.version', { v: serverInfo.version, date: fmtDate(serverInfo.startedAt) })
     : '';

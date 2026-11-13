@@ -43,12 +43,26 @@ export function toWsUrl(input: string): string | null {
 }
 
 /**
- * În aplicație cerem conexiune criptată (wss://), ca nimeni din rețea să nu poată citi sau schimba
- * ce trimite panoul. Excepție: localhost, care nu iese din dispozitiv. Un IP nu poate avea wss
- * (certificatul Tailscale e pe nume), deci în aplicație se scrie numele, nu IP-ul.
+ * Ce adrese acceptă aplicația:
+ * - wss:// (numele Tailscale): criptat, merge de oriunde;
+ * - ws:// doar spre localhost sau spre un IP din rețeaua de acasă (192.168.x.x, 10.x.x.x, 172.16–31.x.x).
+ *   Necriptat, dar traficul nu iese din Wi-Fi-ul tău. Un IP public prin ws:// ar trece necriptat prin internet, deci nu.
  */
-export function isSecureEnough(wsUrl: string): boolean {
-  return wsUrl.startsWith('wss://') || /^ws:\/\/(localhost|127\.0\.0\.1|\[::1\])[:/]/i.test(wsUrl);
+export function isAllowedInApp(wsUrl: string): boolean {
+  if (wsUrl.startsWith('wss://')) return true;
+  const m = /^ws:\/\/([^/:]+|\[[^\]]+\])[:/]/i.exec(wsUrl);
+  if (!m) return false;
+  const host = m[1].toLowerCase();
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || isHomeIp(host);
+}
+
+/** IP din rețeaua locală (adresele private din RFC 1918). */
+export function isHomeIp(host: string): boolean {
+  const p = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (!p) return false;
+  const [a, b] = [Number(p[1]), Number(p[2])];
+  if (p.slice(1).some((n) => Number(n) > 255)) return false;
+  return a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
 }
 
 /** Adresa salvată pe telefon (în aplicație), sau '' dacă nu a fost aleasă încă. */
@@ -77,7 +91,7 @@ export const LINK_STATE = 'server-link-state';
 export function currentWsUrl(): string | null {
   if (IS_APP) {
     const url = toWsUrl(savedAddress());
-    return url && isSecureEnough(url) ? url : null;
+    return url && isAllowedInApp(url) ? url : null;
   }
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   return `${proto}://${location.host}${WS_PATH}`;

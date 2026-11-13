@@ -28,6 +28,8 @@ export const MAX_ACTIVE_RANGE = { min: 20, max: 1000 } as const;
 export interface ServerInfo {
   /** Ce scrii în aplicația de telefon (ex. „pc.tailnet.ts.net:5180”); null dacă Tailscale nu e pornit. */
   phoneAddress: string | null;
+  /** Adresele pe Wi-Fi-ul de acasă (ex. „192.168.1.20:5180”), doar cu WIFI=true în .env; altfel listă goală. */
+  wifiAddresses: string[];
   version: string;
   /** Când a pornit serverul, ISO. */
   startedAt: string;

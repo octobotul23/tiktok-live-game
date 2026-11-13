@@ -191,7 +191,13 @@ TikTok LIVE ──► server pe calculator (npm run dev) ──Tailscale──�
                  panoul (browser pe calculator)
 ```
 
+Telefonul ajunge la calculator în două feluri; panoul îți arată adresa pentru fiecare:
+- **prin Tailscale** (merge de oriunde, legătură criptată): adresa `pc.tailnet.ts.net:5180`;
+- **pe Wi-Fi-ul de acasă**, fără Tailscale: pui `WIFI=true` în `.env` și scrii în aplicație IP-ul calculatorului (ex. `192.168.1.13:5180`). Telefonul și calculatorul trebuie să fie în aceeași rețea de acasă. Calculatorul poate fi și pe cablu, la același router.
+
 ### O singură dată: pregătirea
+
+Doar pentru Tailscale (pe Wi-Fi-ul de acasă ajunge `WIFI=true` în `.env`, apoi `npm run dev`):
 
 1. **Tailscale** pornit pe calculator și pe telefon (aplicația Tailscale din Play Store), în același cont.
 2. Pe calculator, publică jocul în rețeaua Tailscale (rămâne setat și după repornire):
@@ -221,7 +227,7 @@ La o versiune nouă instalezi peste cea veche; adresa salvată rămâne. Dacă s
 
 ### Folosirea
 
-1. Pe calculator: `npm run dev` și panoul (http://localhost:5180/panel.html). În cardul **Joc** vezi **Adresa pentru aplicația de pe telefon** (ex. `pc.tailnet.ts.net:5180`).
+1. Pe calculator: `npm run dev` și panoul (http://localhost:5180/panel.html). În cardul **Joc** vezi **Adresa pentru aplicația de pe telefon** (ex. `pc.tailnet.ts.net:5180`) și, cu `WIFI=true`, **Pe Wi-Fi-ul de acasă** (ex. `192.168.1.13:5180`).
 2. Pe telefon: deschide **Live Game**. Prima dată scrie adresa de mai sus și apasă **Conectează**. Data viitoare se conectează singur.
 3. În panou, la **Ecrane**, apare „📱 telefon (aplicația) v0.0.2”. Tot ce schimbi în panou (setări, mod, simulator, TikTok) ajunge imediat pe telefon.
 4. Pornește LIVE în TikTok cu partajarea ecranului, apoi treci în **Live Game** și lasă telefonul așa. Comentariile le vezi în fereastra mică a TikTok.
@@ -232,7 +238,9 @@ La o versiune nouă instalezi peste cea veche; adresa salvată rămâne. Dacă s
 - **ecranul de conectare** se redeschide atingând de **5 ori, repede, colțul din stânga sus** (gest ascuns). Nu apare singur în timpul live-ului, nici dacă se pierde legătura, ca să nu-l vadă spectatorii. Starea o vezi în panou.
 
 **Securitate:**
-- aplicația acceptă doar numele Tailscale, nu un IP, pentru că doar așa legătura e criptată (`wss://`);
+- aplicația acceptă numele Tailscale (legătură criptată, `wss://`) sau un IP din rețeaua de acasă (192.168.x.x, 10.x.x.x). Pe Wi-Fi legătura e necriptată, dar nu iese din casă; un IP de pe internet e refuzat;
+- cu `WIFI=true`, jocul se deschide doar pe IP-ul de acasă al calculatorului, nu și pe VPN-uri (ex. Radmin) sau mașini virtuale. **Nu-l porni pe un Wi-Fi public sau împărțit**: oricine e în aceeași rețea ar putea ajunge la joc. Windows poate cere o dată voie în firewall pentru Node.js: alege „Rețele private”;
+- dacă routerul îi dă calculatorului alt IP (după o repornire), panoul arată adresa nouă; o schimbi în aplicație cu gestul ascuns;
 - serverul primește conexiuni doar de la paginile deschise pe calculator, de la aplicație și de la numele Tailscale exact al calculatorului. Alte site-uri (inclusiv alte `*.ts.net`) sunt refuzate;
 - comenzile (setări, mod, TikTok) le acceptă doar de la panou.
 
@@ -260,7 +268,7 @@ Zona de joc utilă e între 10% și 65% din înălțime: sus e bara TikTok, iar 
 
 ## Configurare și balans
 
-- `.env`: plafonul de caractere (`MAX_ACTIVE`), username-ul TikTok, modul simulator, cheia opțională Euler Stream, porturile, limba și „doar urmăritorii” (valorile de pornire).
+- `.env`: plafonul de caractere (`MAX_ACTIVE`), username-ul TikTok, modul simulator, cheia opțională Euler Stream, porturile, Wi-Fi-ul de acasă (`WIFI`), limba și „doar urmăritorii” (valorile de pornire).
 - `game/src/config/config.ts`: plafonul de caractere (300), despawn-ul (90 s), dash-ul, duratele rundelor, combatul (rază, cooldown, damage), like-urile, XP-ul și balansul fiecărui mod (`survival`, `boss`).
 
 ## Maparea cadourilor

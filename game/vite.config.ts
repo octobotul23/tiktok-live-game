@@ -23,6 +23,8 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       // Implicit doar pe calculatorul ăsta, pe IPv4: pe Windows „localhost” ar asculta doar pe ::1,
       // iar proxy-urile (ex. `tailscale serve` → 127.0.0.1) n-ar mai găsi jocul. GAME_HOST=0.0.0.0 îl deschide în rețea.
+      // Pentru Wi-Fi-ul de acasă (WIFI=true) nu deschidem Vite pe toate rețelele: serverul pune o punte
+      // doar pe IP-ul de acasă (server/src/wifiBridge.ts).
       host: env.GAME_HOST || '127.0.0.1',
       // Numele MagicDNS de Tailscale (ex. pc.tailnet.ts.net); accesul prin IP merge oricum.
       allowedHosts: ['.ts.net'],

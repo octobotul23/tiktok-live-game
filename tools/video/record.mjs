@@ -57,6 +57,8 @@ window.__rec = (() => {
   const VOTE_GIFT = ${JSON.stringify(voteGifts)};
   const FEATURED = ${JSON.stringify(featuredId)};
   let pending = null;
+  const typeQueue = []; // mesajele persoanei urmărite, scrise unul după altul
+  let lastSent = -1;
   const faces = [];
 
   const color = (u) => {
@@ -91,12 +93,7 @@ window.__rec = (() => {
       case 'gift': return gift(a.user, a.gift, a.count);
       case 'vote': return chat(a.user, String(option(a.want, a.r) + 1));
       case 'voteGift': return gift(a.user, VOTE_GIFT[option(a.want, a.r) + 1], a.count);
-      case 'typed': {
-        const text = a.text.replace('{pvp}', () => String(option('pvp', 0) + 1));
-        __live.type(a.user.nickname, color(a.user), text, a.dur);
-        pending = { user: a.user, text, sendAt: a.vt + a.dur + 0.3 };
-        return;
-      }
+      case 'typed': return typeQueue.push(a);
       case 'control': return scene.streamer({ action: a.action });
       case 'viewers': return __live.setViewers(a.n, faces);
     }
@@ -109,12 +106,27 @@ window.__rec = (() => {
         __live.sent();
         chat(pending.user, pending.text);
         pending = null;
+        lastSent = vt;
+      }
+      // Următorul mesaj începe abia după ce tastatura s-a închis de la cel dinainte.
+      if (!pending && typeQueue.length && vt >= lastSent + 0.45) {
+        const a = typeQueue.shift();
+        const text = a.text.replace('{pvp}', () => String(option('pvp', 0) + 1));
+        pending = { user: a.user, text, sendAt: vt + __live.type(text) };
       }
       for (let i = 0; i < steps; i++) {
         t += STEP;
         game.step(t, STEP);
       }
       __live.setViewers(Number.NaN, faces);
+      // Eticheta „TU” deasupra caracterului persoanei urmărite, ca să știi care ești pe ecran.
+      const me = scene.players.get(FEATURED);
+      const e = me?.entity;
+      if (e && e.state !== 'despawning' && e.visible !== false) {
+        const r = game.canvas.getBoundingClientRect();
+        const k = r.width / game.scale.width;
+        __live.marker(r.left + e.x * k, r.top + (e.y - 22 * e.scale - 34) * k, me.nickname);
+      } else __live.marker(null);
       __live.tick(vt);
       return { phase: scene.director.phase, timeLeft: scene.director.timeLeft };
     },

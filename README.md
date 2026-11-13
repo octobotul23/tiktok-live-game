@@ -291,7 +291,7 @@ Zona de joc utilă e între 10% și 65% din înălțime: sus e bara TikTok, iar 
 
 ## Videoclipuri de prezentare
 
-`tools/video` filmează jocul „ca pe un LIVE”: deasupra jocului apare o interfață generică de LIVE (bara de sus, chatul, cadourile, inimioarele), iar o persoană urmărită (Mara / Mia) își tastează comenzile în căsuța de comentarii. Videoclipurile ies verticale, 1080×1920, 30 de cadre pe secundă, fără sunet.
+`tools/video` filmează jocul „ca pe un LIVE”: deasupra jocului apare o interfață generică de LIVE (bara de sus, chatul, cadourile, inimioarele), iar o persoană urmărită (Mara / Mia) își scrie comenzile ca pe telefon: atinge căsuța, se deschide tastatura și fiecare tastă se apasă pe rând (Shift pentru majuscule, apăsare lungă pentru diacritice și semne, emoji din bara de sugestii), apoi atinge trimiterea și tastatura se închide. Deasupra caracterului ei din joc stă eticheta „TU · Mara”, ca să se vadă care e. Videoclipurile ies verticale, 1080×1920, 30 de cadre pe secundă, fără sunet.
 
 Ai nevoie de `npm run dev` pornit, de Chrome sau Edge și de `ffmpeg` în PATH.
 
@@ -305,6 +305,8 @@ npm run video -- survival-en vote-pvp-en
 
 | Scenariu | Limba | Ce se vede |
 |---|---|---|
+| `camera-mica` | română | cameră mică, 10 oameni: chat liniștit, Mara scrie des și își găsește caracterul pe ecran |
+| `small-room-en` | engleză | aceeași cameră mică, în engleză |
 | `survival` | română | lobby, apoi Survival: chatul apără cristalul, cadouri tot mai mari |
 | `vot-pvp` | română | rezultatele unei runde Boss Slayer, votul chatului, apoi Sus vs Jos |
 | `survival-en` | engleză | același Survival, cu jocul, chatul și comenzile în engleză (`up`, `left`…) |

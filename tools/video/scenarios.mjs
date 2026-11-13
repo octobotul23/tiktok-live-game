@@ -134,8 +134,8 @@ function kit(lang, seed) {
     const kind = weighted(r, [['plain', 60], ['loud', 10], ['emoji', 15], ['extra', 15]]);
     return pick(r, kind === 'emoji' ? EMOJI_MOVES : L.moves[kind]);
   };
-  /** Persoana urmărită tastează (căsuța de jos), apoi trimite. */
-  const typed = (at, text, dur = Math.max(0.6, [...text].length * 0.11)) => ({ at, type: 'typed', user: featured, text, dur });
+  /** Persoana urmărită atinge căsuța, scrie pe tastatura telefonului, apoi trimite (durata o dă tastarea). */
+  const typed = (at, text) => ({ at, type: 'typed', user: featured, text });
   return { L, rnd, featured, moveText, typed, crowd: (n) => makeViewers(rnd, L.names, n) };
 }
 
@@ -291,10 +291,61 @@ function votePvp(lang) {
   };
 }
 
+/**
+ * Cameră mică: 10 oameni (9 + persoana urmărită). Chatul curge încet, ca mesajele să stea pe ecran,
+ * iar persoana urmărită scrie des, cu tastatura telefonului, și se vede unde e caracterul ei.
+ */
+function small(lang) {
+  const { L, rnd, featured, moveText, typed, crowd: makeCrowd } = kit(lang, 1110);
+  const crowd = makeCrowd(9);
+  const RO = lang === 'ro';
+  const lines = RO
+    ? ['salut! sus', 'unde sunt? 😂', 'aaa, aia sunt eu', 'stanga', 'sus sus', 'dreapta 🔥', 'jos', 'mersi de trandafiri ❤️',
+      'SUS', 'acum eu 🎁', 'dreapta', 'hai că putem 💪']
+    : ['hi! up', 'where am I? 😂', 'oh, that is me', 'left', 'up up', 'right 🔥', 'down', 'thx for the roses ❤️',
+      'UP', 'my turn 🎁', 'right', 'we got this 💪'];
+
+  // Lobby: lumea vine pe rând, câte unul.
+  const lobby = [
+    ...crowd.map((v, i) => ({ at: 0.4 + i * 0.9 + rnd() * 0.3, type: 'chat', user: v, text: i % 3 === 0 ? pick(rnd, L.hello) : moveText(rnd) })),
+    ...likes(rnd, { from: 2, to: 10, every: 1.4, pool: crowd }),
+    typed(0.6, lines[0]),
+    typed(4.4, lines[1]),
+    typed(8, lines[2]),
+    { at: 0, type: 'viewers', n: 6 },
+    { at: 3, type: 'viewers', n: 8 },
+    { at: 6, type: 'viewers', n: 10 },
+  ];
+
+  // Runda: puțini oameni, ritm calm; persoana urmărită scrie la câteva secunde.
+  const T = 46;
+  const playing = [
+    ...chatter(rnd, { to: T, rate: 0.75, pool: crowd, text: (r) => (r() < 0.85 ? moveText(r) : pick(r, [...L.chatter, ...L.survivalHype])) }),
+    ...likes(rnd, { to: T, every: 1.1, pool: crowd }),
+    // Între mesaje tastatura se închide câteva secunde, ca să se vadă jocul.
+    ...lines.slice(3).map((text, i) => typed(0.8 + i * 5, text)),
+    { at: 16, type: 'gift', user: crowd[2], gift: 'Rose', count: 5 },
+    { at: 34.5, type: 'gift', user: featured, gift: 'Finger Heart', count: 1 },
+    { at: 39, type: 'gift', user: crowd[6], gift: 'Doughnut', count: 1 },
+  ];
+
+  return {
+    lang,
+    url: '/?debug=1&mode=survival',
+    prepare: { seconds: 0.4, actions: [] },
+    segments: [
+      { phase: 'lobby', actions: lobby },
+      { phase: 'playing', actions: playing, endAfter: T },
+    ],
+  };
+}
+
 /** Numele fișierului → scenariul. */
 export const SCENARIOS = {
   survival: () => ({ ...survival('ro'), name: 'survival', title: 'Survival: chatul apără cristalul' }),
   'vot-pvp': () => ({ ...votePvp('ro'), name: 'vot-pvp', title: 'Votul chatului, apoi Sus vs Jos' }),
+  'camera-mica': () => ({ ...small('ro'), name: 'camera-mica', title: 'Cameră mică: 10 oameni, tastatura telefonului' }),
+  'small-room-en': () => ({ ...small('en'), name: 'small-room-en', title: 'Small room: 10 people, phone keyboard (EN)' }),
   'survival-en': () => ({ ...survival('en'), name: 'survival-en', title: 'Survival: chat defends the crystal (EN)' }),
   'vote-pvp-en': () => ({ ...votePvp('en'), name: 'vote-pvp-en', title: 'Chat vote, then Top vs Bottom (EN)' }),
 };

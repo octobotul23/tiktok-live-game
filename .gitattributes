@@ -1,0 +1,3 @@
+# Lansatoarele cu dublu-clic: .bat are nevoie de CRLF pe Windows, .command de LF pe Mac.
+*.bat text eol=crlf
+*.command text eol=lf

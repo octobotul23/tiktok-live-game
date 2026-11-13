@@ -227,7 +227,7 @@ La o versiune nouă instalezi peste cea veche; adresa salvată rămâne. Dacă s
 
 ### Folosirea
 
-1. Pe calculator: `npm run dev` și panoul (http://localhost:5180/panel.html). În cardul **Joc** vezi **Adresa pentru aplicația de pe telefon** (ex. `pc.tailnet.ts.net:5180`) și, cu `WIFI=true`, **Pe Wi-Fi-ul de acasă** (ex. `192.168.1.13:5180`).
+1. Pe calculator: dublu-clic pe **`Porneste jocul.bat`** (Windows) sau **`Porneste jocul.command`** (Mac), în folderul jocului. Pornește serverul și deschide singur panoul (http://localhost:5180/panel.html); lasă fereastra deschisă cât ești live. Merge și din terminal: `npm run dev`. Pe Mac, prima dată: clic dreapta pe fișier → Deschide. În cardul **Joc** vezi **Adresa pentru aplicația de pe telefon** (ex. `pc.tailnet.ts.net:5180`) și, cu `WIFI=true`, **Pe Wi-Fi-ul de acasă** (ex. `192.168.1.13:5180`).
 2. Pe telefon: deschide **Live Game**. Prima dată scrie adresa de mai sus și apasă **Conectează**. Data viitoare se conectează singur.
 3. În panou, la **Ecrane**, apare „📱 telefon (aplicația) v0.0.2”. Tot ce schimbi în panou (setări, mod, simulator, TikTok) ajunge imediat pe telefon.
 4. Pornește LIVE în TikTok cu partajarea ecranului, apoi treci în **Live Game** și lasă telefonul așa. Comentariile le vezi în fereastra mică a TikTok.

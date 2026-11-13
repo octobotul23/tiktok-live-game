@@ -18,6 +18,12 @@ export const SERVER_CONFIG = {
   tiktokUsername: username,
   // Fără username nu avem la ce să ne conectăm, deci simulatorul pornește oricum.
   simulate: (process.env.SIMULATE ?? 'true').toLowerCase() !== 'false' || username === '',
+  // Cu SIMULATE=false și un username, serverul se conectează singur la TikTok LIVE la pornire.
+  tiktokAutoConnect: (process.env.SIMULATE ?? 'true').toLowerCase() === 'false' && username !== '',
+  // Cheie Euler Stream (opțională, gratuită pe eulerstream.com): ridică limitele de conectare. Stă doar în .env.
+  tiktokSignApiKey: (process.env.TIKTOK_SIGN_API_KEY ?? '').trim(),
+  // Jurnalele conexiunii TikTok (un fișier pe zi); folderul e în .gitignore.
+  logDir: path.join(rootDir, 'logs'),
   // Cât așteptăm după ultimul eveniment dintr-o serie de cadouri fără repeatEnd înainte s-o închidem forțat.
   giftStreakTimeoutMs: 4000,
   // Setările de pornire ale jocului; din panou se pot schimba în timpul live-ului.

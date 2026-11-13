@@ -33,6 +33,21 @@ export type LiveEvent =
 
 export type SourceStatus = { source: 'sim' | 'tiktok'; connected: boolean; detail?: string };
 
+/**
+ * Conexiunea la TikTok LIVE, pentru panou: off = oprită; connecting = încearcă acum; live = primește evenimente;
+ * waiting = contul nu e live încă (reîncearcă singur); error = a picat (reîncearcă singur, cu pauze tot mai mari).
+ */
+export interface TikTokStatus {
+  username: string;
+  state: 'off' | 'connecting' | 'live' | 'waiting' | 'error';
+  /** Peste câte secunde reîncearcă (waiting / error). */
+  retryInSec?: number;
+  /** Mesajul tehnic al ultimei erori, pentru depanare. */
+  error?: string;
+  /** Câți spectatori are live-ul (din TikTok), dacă se știe. */
+  viewers?: number;
+}
+
 export interface SimSettings {
   enabled: boolean;
   viewers: number; // 0–1000 spectatori falși
@@ -75,6 +90,8 @@ export type ControlMsg =
   | { type: 'sim:chat'; nickname: string; text: string; isFollower: boolean }
   | { type: 'sim:follow'; nickname: string }
   | { type: 'settings:set'; settings: Partial<GameSettings> }
+  | { type: 'tiktok:connect'; username: string }
+  | { type: 'tiktok:disconnect' }
   | { type: 'streamer'; cmd: StreamerAction }
   | { type: 'streamer:key'; key: string; down: boolean };
 
@@ -86,6 +103,7 @@ export type WireMsg =
   | { kind: 'control'; msg: ControlMsg }
   | { kind: 'state'; state: GameState }
   | { kind: 'sim'; settings: SimSettings }
-  | { kind: 'settings'; settings: GameSettings };
+  | { kind: 'settings'; settings: GameSettings }
+  | { kind: 'tiktok'; status: TikTokStatus };
 
 export const WS_PATH = '/ws';

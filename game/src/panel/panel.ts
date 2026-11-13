@@ -1,5 +1,5 @@
 import { GIFT_CATALOG } from '../../../shared/gifts';
-import type { ControlMsg, GameSettings, GameState, LiveEvent, SimSettings, WireMsg } from '../../../shared/protocol';
+import type { ControlMsg, GameSettings, GameState, LiveEvent, SimSettings, TikTokStatus, WireMsg } from '../../../shared/protocol';
 import { onLangChange, setLang, t, type StringKey } from '../i18n';
 import { ServerLink } from '../net/ServerLink';
 
@@ -21,6 +21,7 @@ function applyI18n(): void {
   }
   document.title = t('panel.title');
   modeKey = ''; // butoanele de mod au „tasta n”, se refac
+  renderTikTok();
   if (lastState) renderState(lastState);
 }
 onLangChange((lang) => {
@@ -47,6 +48,55 @@ function applyGameSettings(s: GameSettings): void {
   $<HTMLInputElement>('set-gifters').disabled = !s.followersOnly;
   setLang(s.lang);
 }
+
+// --- TikTok LIVE -------------------------------------------------------------------
+let ttStatus: TikTokStatus = { username: '', state: 'off' };
+/** Când reîncearcă serverul (ora locală), ca numărătoarea să meargă fără mesaje noi. */
+let ttRetryAt = 0;
+
+$<HTMLFormElement>('tt-form').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const username = $<HTMLInputElement>('tt-user').value.trim();
+  if (username) control({ type: 'tiktok:connect', username });
+});
+$('tt-disconnect').addEventListener('click', () => control({ type: 'tiktok:disconnect' }));
+
+function applyTikTok(s: TikTokStatus): void {
+  ttStatus = s;
+  ttRetryAt = s.retryInSec ? Date.now() + s.retryInSec * 1000 : 0;
+  const input = $<HTMLInputElement>('tt-user');
+  if (s.username && document.activeElement !== input && s.error !== 'bad-username') input.value = `@${s.username}`;
+  // „Deconectează” are sens cât timp serverul încearcă sau e conectat; o eroare de nume nu pornește nimic.
+  const running = s.state !== 'off' && s.error !== 'bad-username';
+  $('tt-disconnect').hidden = !running;
+  $('tt-connect').hidden = running;
+  setPill('pill-tiktok', s.state === 'live');
+  renderTikTok();
+}
+
+function renderTikTok(): void {
+  const s = ttStatus;
+  const el = $('tt-status');
+  const user = s.username;
+  const sec = Math.max(0, Math.ceil((ttRetryAt - Date.now()) / 1000));
+  let text: string;
+  if (s.error === 'bad-username') text = t('panel.tiktokBadUsername', { user });
+  else if (s.state === 'connecting') text = t('panel.tiktokConnecting', { user });
+  else if (s.state === 'live') text = t('panel.tiktokLive', { user }) + (s.viewers !== undefined ? ` · ${t('panel.tiktokViewers', { n: s.viewers })}` : '');
+  else if (s.state === 'waiting') text = t('panel.tiktokWaiting', { user, sec });
+  else if (s.state === 'error') text = t('panel.tiktokError', { sec });
+  else text = t('panel.tiktokOff');
+  el.textContent = text;
+  el.className = `tt-status ${s.error === 'bad-username' ? 'error' : s.state}`;
+  // Detaliul tehnic (ex. „SignatureRateLimitError: …”) ajută la depanare, dar nu e mesajul principal.
+  const detail = $('tt-error');
+  const showDetail = s.state === 'error' && !!s.error && s.error !== 'bad-username';
+  detail.hidden = !showDetail;
+  detail.textContent = showDetail ? s.error! : '';
+}
+setInterval(() => {
+  if (ttRetryAt) renderTikTok();
+}, 1000);
 
 // --- simulator ---------------------------------------------------------------
 const sliders: { id: string; out: string; key: keyof SimSettings }[] = [
@@ -173,6 +223,9 @@ function onMessage(msg: WireMsg): void {
       break;
     case 'status':
       if (msg.status.source === 'sim') setPill('pill-sim', msg.status.connected);
+      break;
+    case 'tiktok':
+      applyTikTok(msg.status);
       break;
     case 'settings':
       applyGameSettings(msg.settings);

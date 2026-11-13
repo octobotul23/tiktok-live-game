@@ -3,6 +3,7 @@ import type { GameSettings } from '../../shared/protocol';
 import { SERVER_CONFIG } from './config';
 import { Hub } from './hub';
 import { Simulator } from './sim/Simulator';
+import { cleanUsername, TikTokConnector } from './tiktok/Connector';
 import { GiftStreakCollapser } from './tiktok/normalize';
 
 const server = http.createServer((_req, res) => {
@@ -25,12 +26,31 @@ const publishSim = () => {
   hub.setStatus({ source: 'sim', connected: sim.settings.enabled });
 };
 
+// TikTok LIVE real: are seria lui de cadouri, ca o serie reală și una din simulator să nu se amestece.
+const tiktok = new TikTokConnector({
+  emit,
+  gifts: new GiftStreakCollapser(emit, SERVER_CONFIG.giftStreakTimeoutMs),
+  logDir: SERVER_CONFIG.logDir,
+  signApiKey: SERVER_CONFIG.tiktokSignApiKey,
+  onStatus: (status) => {
+    hub.sendToPanels({ kind: 'tiktok', status });
+    hub.setStatus({ source: 'tiktok', connected: status.state === 'live' });
+    // Când vin spectatori reali, spectatorii falși se opresc (butoanele de test din panou merg în continuare).
+    if (status.state === 'live' && sim.settings.enabled) {
+      sim.update({ enabled: false });
+      publishSim();
+    }
+  },
+});
+
 // Setările jocului stau aici, nu în pagina de joc: un refresh în OBS nu le pierde.
 const settings: GameSettings = { ...SERVER_CONFIG.game };
 
 hub.setGreeting((role) => [
   { kind: 'settings', settings },
-  ...(role === 'panel' ? [{ kind: 'sim', settings: sim.settings } as const] : []),
+  ...(role === 'panel'
+    ? [{ kind: 'sim', settings: sim.settings } as const, { kind: 'tiktok', status: tiktok.current } as const]
+    : []),
 ]);
 hub.onGameState = (state) => sim.setGameState(state);
 hub.onControl = (msg) => {
@@ -48,6 +68,15 @@ hub.onControl = (msg) => {
     case 'sim:follow':
       sim.sendFollow(msg.nickname);
       return true;
+    case 'tiktok:connect': {
+      const username = cleanUsername(msg.username);
+      if (username) tiktok.start(username);
+      else hub.sendToPanels({ kind: 'tiktok', status: { username: msg.username, state: 'error', error: 'bad-username' } });
+      return true;
+    }
+    case 'tiktok:disconnect':
+      tiktok.stop();
+      return true;
     case 'settings:set':
       if (msg.settings.lang === 'ro' || msg.settings.lang === 'en') settings.lang = msg.settings.lang;
       if (typeof msg.settings.followersOnly === 'boolean') settings.followersOnly = msg.settings.followersOnly;
@@ -62,10 +91,8 @@ hub.onControl = (msg) => {
 sim.start();
 hub.setStatus({ source: 'sim', connected: sim.settings.enabled });
 
-if (!SERVER_CONFIG.simulate) {
-  // Conectarea la TikTok LIVE real vine în Milestone 5.
-  console.warn(`[server] SIMULATE=false pentru @${SERVER_CONFIG.tiktokUsername}, dar conectorul TikTok nu e încă implementat (M5).`);
-}
+if (SERVER_CONFIG.tiktokAutoConnect) tiktok.start(SERVER_CONFIG.tiktokUsername);
+else hub.setStatus({ source: 'tiktok', connected: false });
 
 // Doar pe calculatorul local: jocul și panoul vin prin proxy-ul Vite, nu direct din rețea.
 server.listen(SERVER_CONFIG.port, '127.0.0.1', () => {

@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node --watch --import tsx src/index.ts",
     "start": "tsx src/index.ts"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
+    "tiktok-live-connector": "^2.5.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {

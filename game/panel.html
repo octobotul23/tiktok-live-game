@@ -12,12 +12,26 @@
       <h1 data-i18n="panel.title">Panou de control</h1>
       <div class="pills">
         <span id="pill-server" class="pill off">server</span>
+        <span id="pill-tiktok" class="pill off">tiktok</span>
         <span id="pill-sim" class="pill off">simulator</span>
         <span id="pill-game" class="pill off" data-i18n="panel.pillGame">joc</span>
       </div>
     </header>
 
     <main>
+      <section class="card">
+        <h2 data-i18n="panel.tiktok">TikTok LIVE</h2>
+        <form id="tt-form" class="row">
+          <label for="tt-user" data-i18n="panel.tiktokUser">Contul care e LIVE</label>
+          <input id="tt-user" class="grow" autocomplete="off" spellcheck="false" data-i18n-placeholder="panel.tiktokUserPlaceholder" />
+          <button type="submit" id="tt-connect" data-i18n="panel.tiktokConnect">Conectează</button>
+          <button type="button" id="tt-disconnect" data-i18n="panel.tiktokDisconnect" hidden>Deconectează</button>
+        </form>
+        <p id="tt-status" class="tt-status off"></p>
+        <p id="tt-error" class="hint tt-error" hidden></p>
+        <p class="hint" data-i18n="panel.tiktokHint"></p>
+      </section>
+
       <section class="card">
         <h2 data-i18n="panel.game">Joc</h2>
         <dl class="state">

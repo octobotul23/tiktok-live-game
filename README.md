@@ -2,7 +2,7 @@
 
 Joc controlat de comentariile, cadourile și like-urile spectatorilor. Rulează într-o pagină web pe care o capturezi în OBS ca **Browser Source** (1080×1920, vertical) și o transmiți pe TikTok LIVE.
 
-- `server/`: se conectează la TikTok LIVE (Milestone 5) sau pornește **simulatorul**, apoi trimite evenimentele (chat, cadouri, like-uri) prin WebSocket.
+- `server/`: se conectează la TikTok LIVE și/sau pornește **simulatorul**, apoi trimite evenimentele (chat, cadouri, like-uri) prin WebSocket.
 - `game/`: jocul (Phaser 3 + Vite) și panoul de control.
 - `shared/`: tipurile mesajelor și catalogul de cadouri, comune ambelor părți.
 
@@ -16,7 +16,7 @@ Specificația completă și deciziile luate sunt în [docs/SPEC.md](docs/SPEC.md
 | 2 | Core multi-mod, vot, Survival, Boss Slayer | ✅ gata de testat |
 | 3 | PvP Sus vs Jos, cadouri per mod | ✅ gata de testat |
 | 4 | Restul modurilor, câte unul | în lucru: Tower Defense ✅ gata de testat |
-| 5 | Conectare la TikTok LIVE real | |
+| 5 | Conectare la TikTok LIVE real | ✅ gata de testat (cere un LIVE real) |
 
 ## Instalare pe Mac
 
@@ -140,7 +140,35 @@ Din tastatură (când pagina jocului are focus) sau din panou, secțiunea **Stre
 
 Textele sunt în `game/src/i18n/ro.ts` și `game/src/i18n/en.ts`. Dacă adaugi un text nou în `ro.ts` și uiți traducerea din `en.ts`, `npm run typecheck` îți arată unde lipsește.
 
-> Deocamdată informația „urmărește / nu urmărește” vine din simulator: sliderul **% urmăritori**, bifa **e urmăritor** de la comentariul de test și butonul **Dă follow**. Cu TikTok LIVE real (Milestone 5) vine direct de la TikTok.
+> Pe TikTok LIVE real, informația „urmărește / nu urmărește” vine de la TikTok, la fiecare comentariu, cadou sau intrare. În simulator vine din sliderul **% urmăritori**, bifa **e urmăritor** de la comentariul de test și butonul **Dă follow**.
+
+## Conectarea la TikTok LIVE
+
+Jocul citește comentariile, cadourile, like-urile, intrările și follow-urile din live-ul tău, prin biblioteca [tiktok-live-connector](https://github.com/zerodytrash/TikTok-Live-Connector). Nu-ți cere parola și nu scrie nimic pe TikTok: doar citește ce vede orice spectator.
+
+**Varianta simplă, din panou:**
+1. Pornește `npm run dev` și deschide panoul (http://localhost:5180/panel.html).
+2. În cardul **TikTok LIVE** scrie contul (`@nume`, `nume` sau linkul profilului) și apasă **Conectează**.
+3. Pornește LIVE-ul pe TikTok. Poți apăsa Conectează și înainte: serverul verifică singur la fiecare 30 s până începe live-ul.
+
+Când apare „Conectat la live-ul lui @nume”, totul ajunge în joc, iar spectatorii falși ai simulatorului se opresc singuri. Butoanele de cadouri și comentariul de test din panou merg în continuare, pentru probe în timpul live-ului.
+
+**Varianta automată, din `.env`:** `TIKTOK_USERNAME=numele_tau` și `SIMULATE=false`. La fiecare pornire, serverul se conectează singur.
+
+Ce face conexiunea singură:
+- dacă pică rețeaua, reîncearcă după 2, 4, 8… secunde (cel mult 60);
+- dacă live-ul se termină, așteaptă următorul live (verificare la 30 s);
+- comentariile scrise înainte de conectare nu se rejoacă.
+
+| Stare în panou | Ce înseamnă |
+|---|---|
+| verde: „Conectat…” (plus numărul de spectatori) | evenimentele ajung în joc |
+| galben: „nu e LIVE acum” | contul nu e live; reîncearcă singur |
+| roșu: „Legătura cu TikTok a picat” | reîncearcă singur; detaliul tehnic e dedesubt |
+
+Jurnalul conexiunii e în `logs/tiktok-AAAA-LL-ZZ.log`, un fișier pe zi: conectări, deconectări, erori și, la fiecare minut, câte comentarii, cadouri și like-uri au venit. Folderul `logs/` nu se urcă pe git.
+
+**Limite.** Conectarea trece printr-un server de semnare gratuit (Euler Stream), cu un număr limitat de conectări pe zi. Dacă vezi des erori de tip `SignatureRateLimitError`, fă-ți o cheie gratuită pe eulerstream.com și pune-o în `.env` ca `TIKTOK_SIGN_API_KEY=` (doar acolo, niciodată în git). Biblioteca nu e oficială: când TikTok schimbă ceva, poate fi nevoie de `npm update tiktok-live-connector -w server`.
 
 ## Acces de pe alt dispozitiv (Tailscale)
 
@@ -168,7 +196,7 @@ Zona de joc utilă e între 10% și 65% din înălțime: sus e bara TikTok, iar 
 
 ## Configurare și balans
 
-- `.env`: username-ul TikTok, modul simulator, porturile, limba și „doar urmăritorii” (valorile de pornire).
+- `.env`: username-ul TikTok, modul simulator, cheia opțională Euler Stream, porturile, limba și „doar urmăritorii” (valorile de pornire).
 - `game/src/config/config.ts`: plafonul de caractere (300), despawn-ul (90 s), dash-ul, duratele rundelor, combatul (rază, cooldown, damage), like-urile, XP-ul și balansul fiecărui mod (`survival`, `boss`).
 
 ## Maparea cadourilor

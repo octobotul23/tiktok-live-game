@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
-import { MAX_ACTIVE_RANGE, type GameSettings } from '../../shared/protocol';
+import { MAX_ACTIVE_RANGE, NEWCOMER_SEC_RANGE, type GameSettings } from '../../shared/protocol';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 dotenv.config({ path: path.join(rootDir, '.env'), quiet: true });
@@ -42,8 +42,15 @@ export const SERVER_CONFIG = {
     followersOnly: flag('FOLLOWERS_ONLY', false),
     giftersBypass: flag('GIFTERS_BYPASS', true),
     maxActive: clampMaxActive(Number(process.env.MAX_ACTIVE) || 300),
+    newcomerSec: clampNewcomerSec(Number(process.env.NEWCOMER_SEC?.trim() || 10)),
   } satisfies GameSettings as GameSettings,
 };
+
+/** Secundele de evidențiere a caracterelor noi: întreg între 0 și 60; ce nu e număr devine 10. */
+export function clampNewcomerSec(n: number): number {
+  if (!Number.isFinite(n)) return 10;
+  return Math.round(Math.min(NEWCOMER_SEC_RANGE.max, Math.max(NEWCOMER_SEC_RANGE.min, n)));
+}
 
 /** Plafonul de caractere, întreg și în limitele permise. */
 export function clampMaxActive(n: number): number {

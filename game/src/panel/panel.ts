@@ -1,5 +1,5 @@
 import { GIFT_CATALOG } from '../../../shared/gifts';
-import { MAX_ACTIVE_RANGE, type ControlMsg, type GameSettings, type GameState, type LiveEvent, type ScreenInfo, type ServerInfo, type TikTokStatus, type WireMsg } from '../../../shared/protocol';
+import { MAX_ACTIVE_RANGE, NEWCOMER_SEC_RANGE, type ControlMsg, type GameSettings, type GameState, type LiveEvent, type ScreenInfo, type ServerInfo, type TikTokStatus, type WireMsg } from '../../../shared/protocol';
 import { onLangChange, setLang, t, type StringKey } from '../i18n';
 import { ServerLink } from '../net/ServerLink';
 import { setupBots } from './bots';
@@ -66,8 +66,25 @@ const maxControl = numberControl({
 });
 $('set-max-box').replaceWith(maxControl.el);
 
+// Cât timp un caracter nou are numele roșu și aura roșie (0 = oprit).
+let newcomerTimer: ReturnType<typeof setTimeout> | undefined;
+const newcomerControl = numberControl({
+  id: 'set-newcomer',
+  min: NEWCOMER_SEC_RANGE.min,
+  max: NEWCOMER_SEC_RANGE.max,
+  step: 1,
+  unit: 's',
+  labelKey: 'panel.newcomerSec',
+  onChange: (value) => {
+    clearTimeout(newcomerTimer);
+    newcomerTimer = setTimeout(() => setSettings({ newcomerSec: value }), 200);
+  },
+});
+$('set-newcomer-box').replaceWith(newcomerControl.el);
+
 function applyGameSettings(s: GameSettings): void {
   maxControl.set(s.maxActive);
+  newcomerControl.set(s.newcomerSec);
   $<HTMLSelectElement>('set-lang').value = s.lang;
   $<HTMLInputElement>('set-followers').checked = s.followersOnly;
   $<HTMLInputElement>('set-gifters').checked = s.giftersBypass;

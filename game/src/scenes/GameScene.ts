@@ -8,6 +8,7 @@ import { Crowd, type Bounds } from '../core/Crowd';
 import { BoltPool, FloatingTextPool, ParticlePool, TrailPool } from '../core/Effects';
 import { isCombatEffect, resolveGift, voteForGift } from '../core/GiftRouter';
 import { Highlight } from '../core/Highlight';
+import { NewcomerTags } from '../core/NewcomerTags';
 import { LikeMeter } from '../core/LikeMeter';
 import { PlayerRegistry, levelForXp, type Player } from '../core/PlayerRegistry';
 import { RoundDirector, type DirectorHooks } from '../core/RoundDirector';
@@ -48,6 +49,7 @@ export class GameScene extends Phaser.Scene {
   private floating!: FloatingTextPool;
   private combat!: Combat;
   private highlight!: Highlight;
+  private newcomers!: NewcomerTags;
   private hud!: Hud;
   private overlay!: RoundOverlay;
   private debug!: DebugOverlay;
@@ -65,7 +67,8 @@ export class GameScene extends Phaser.Scene {
   private likesTotal = 0;
   private serverOnline = false;
   /** Vin de la server la conectare și când se schimbă din panou. */
-  private settings: GameSettings = { lang: 'ro', followersOnly: false, giftersBypass: true, maxActive: CONFIG.crowd.maxActive };
+  private settings: GameSettings = { lang: 'ro', followersOnly: false, giftersBypass: true, maxActive: CONFIG.crowd.maxActive,
+    newcomerSec: CONFIG.newcomer.sec };
   private lastFollowHint = 0;
   /** Rândurile ultimului ecran de rezultate, ca să-l putem redesena în altă limbă. */
   private lastResultRows: ResultRow[] = [];
@@ -87,6 +90,7 @@ export class GameScene extends Phaser.Scene {
     this.bolts = new BoltPool(this, 300, 44_000, CONFIG.combat.boltSec);
     this.combat = new Combat(this, this.crowd, this.bolts);
     this.highlight = new Highlight(this, this.crowd);
+    this.newcomers = new NewcomerTags(this);
     this.floating = new FloatingTextPool(this, 24, 60_000);
     this.hud = new Hud(this);
     this.overlay = new RoundOverlay(this);
@@ -125,6 +129,7 @@ export class GameScene extends Phaser.Scene {
     this.bolts.update(dt);
     this.floating.update(dt);
     this.highlight.update(time);
+    this.newcomers.update(time);
     this.hud.update(dt);
     this.overlay.update();
     this.fillFromQueue();
@@ -471,7 +476,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawn(p: Player): void {
-    this.crowd.spawn(p);
+    const e = this.crowd.spawn(p);
+    // Caracter nou pe ecran: nume roșu și aură roșie câteva secunde, ca spectatorul să se găsească.
+    const sec = this.settings.newcomerSec;
+    if (sec > 0) {
+      this.crowd.markNew(e, sec);
+      this.newcomers.show(e, this.time.now);
+    }
     this.mode.onPlayerJoin(p);
   }
 

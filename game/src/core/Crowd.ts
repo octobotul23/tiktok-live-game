@@ -43,7 +43,9 @@ export interface CrowdEntity {
   shieldT: number;
   speedT: number;
   powerT: number;
-  /** Strălucirea din spate (aura skin-ului sau bonusul de putere). */
+  /** Secunde rămase cât caracterul e „nou”: aură roșie și numele roșu deasupra (vezi NewcomerTags). */
+  newT: number;
+  /** Strălucirea din spate (aura skin-ului, bonusul de putere sau roșul de jucător nou). */
   aura: Phaser.GameObjects.Image | null;
   /** Bula de scut. */
   bubble: Phaser.GameObjects.Image | null;
@@ -58,6 +60,7 @@ const DEPTH_BASE = 100;
 const DOWNED_TINT = 0x555555;
 const SHIELD_TINT = 0x4cc9f0;
 const POWER_TINT = 0xff7b00;
+export const NEWCOMER_TINT = 0xfe2c55;
 const SPEED_MUL = 1.5;
 
 /**
@@ -110,7 +113,7 @@ export class Crowd {
       player, x: sx, y: sy, state: 'spawning', stateT: 0,
       dashT: 0, dashVX: 0, dashVY: 0, trailAcc: 0, speedMul: 1, frozen: false,
       scale: 1, depth: 0, phase: Math.random() * Math.PI * 2, body, label,
-      attackCd: Math.random() * CONFIG.combat.cooldownSec, downedT: 0, shieldT: 0, speedT: 0, powerT: 0,
+      attackCd: Math.random() * CONFIG.combat.cooldownSec, downedT: 0, shieldT: 0, speedT: 0, powerT: 0, newT: 0,
       aura: null, bubble: null, teamColor: null,
     };
     label.clearTint();
@@ -203,6 +206,13 @@ export class Crowd {
     if (!had) this.syncAura(e);
   }
 
+  /** Caracter nou pe ecran: aură roșie `sec` secunde (0 o oprește). */
+  markNew(e: CrowdEntity, sec: number): void {
+    const had = e.newT > 0;
+    e.newT = Math.max(0, sec);
+    if (had !== e.newT > 0) this.syncAura(e);
+  }
+
   dash(e: CrowdEntity, dir: Dir): void {
     if (e.state === 'despawning' || e.frozen || e.downedT > 0) return;
     const [dx, dy] = DIR_VEC[dir];
@@ -291,6 +301,13 @@ export class Crowd {
         this.syncAura(e);
       }
     }
+    if (e.newT > 0) {
+      e.newT -= dt;
+      if (e.newT <= 0) {
+        e.newT = 0;
+        this.syncAura(e);
+      }
+    }
     // Bula de scut apare/dispare odată cu efectul.
     if (e.shieldT > 0 && !e.bubble) {
       e.bubble = this.bubblePool.pop() ?? this.scene.add.image(0, 0, TEX.ring);
@@ -308,9 +325,9 @@ export class Crowd {
     else e.body.clearTint();
   }
 
-  /** Aura: culoarea bonusului de putere are prioritate față de aura skin-ului. */
+  /** Aura: bonusul de putere are prioritate, apoi roșul de jucător nou, apoi aura skin-ului. */
   private syncAura(e: CrowdEntity): void {
-    const color = e.powerT > 0 ? POWER_TINT : getSkin(e.player.skinId).aura;
+    const color = e.powerT > 0 ? POWER_TINT : e.newT > 0 ? NEWCOMER_TINT : getSkin(e.player.skinId).aura;
     if (color === null) {
       if (e.aura) {
         e.aura.setVisible(false);
@@ -403,8 +420,15 @@ export class Crowd {
     e.body.setPosition(e.x, e.y).setScale(sx, sy).setAlpha(bodyAlpha);
     e.label.setPosition(e.x, e.y + LABEL_OFFSET_Y * e.scale).setAlpha(alpha);
     if (e.aura) {
-      const pulse = 0.85 + 0.15 * Math.sin(this.time * 4 + e.phase);
-      e.aura.setPosition(e.x, e.y).setScale(s * 1.25 * pulse).setAlpha(alpha * 0.75);
+      if (e.powerT <= 0 && e.newT > 0) {
+        // Jucător nou: aură roșie mai mare, care pulsează și se stinge lin în ultima secundă.
+        const pulse = 0.88 + 0.12 * Math.sin(this.time * 6 + e.phase);
+        const fade = Math.min(1, e.newT / 0.8);
+        e.aura.setPosition(e.x, e.y).setScale(s * 1.6 * pulse).setAlpha(alpha * 0.95 * fade);
+      } else {
+        const pulse = 0.85 + 0.15 * Math.sin(this.time * 4 + e.phase);
+        e.aura.setPosition(e.x, e.y).setScale(s * 1.25 * pulse).setAlpha(alpha * 0.75);
+      }
     }
     if (e.bubble) {
       // Clipește în ultima secundă, ca să se vadă că expiră.

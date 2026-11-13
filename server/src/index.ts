@@ -1,7 +1,7 @@
 import http from 'node:http';
 import path from 'node:path';
 import type { GameSettings, ServerInfo } from '../../shared/protocol';
-import { clampMaxActive, SERVER_CONFIG } from './config';
+import { clampMaxActive, clampNewcomerSec, SERVER_CONFIG } from './config';
 import { Hub } from './hub';
 import { cleanSimPatch, simDefaults, type SimSettings } from '../../shared/sim';
 import { Simulator } from './sim/Simulator';
@@ -121,6 +121,9 @@ hub.onControl = (msg) => {
       if (typeof msg.settings.giftersBypass === 'boolean') settings.giftersBypass = msg.settings.giftersBypass;
       if (typeof msg.settings.maxActive === 'number' && Number.isFinite(msg.settings.maxActive)) {
         settings.maxActive = clampMaxActive(msg.settings.maxActive);
+      }
+      if (typeof msg.settings.newcomerSec === 'number' && Number.isFinite(msg.settings.newcomerSec)) {
+        settings.newcomerSec = clampNewcomerSec(msg.settings.newcomerSec);
       }
       hub.sendToAll({ kind: 'settings', settings });
       return true;

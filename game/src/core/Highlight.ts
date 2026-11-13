@@ -72,6 +72,8 @@ export class Highlight {
       // Numele nu iese din ecran la margini.
       const half = slot.name.width / 2 + 4;
       slot.name.setPosition(Phaser.Math.Clamp(e.x, half, WIDTH - half), e.y - 22 * e.scale).setAlpha(fade);
+      // Cât e „nou”, numele lui stă deja deasupra, în roșu (NewcomerTags): nu-l dublăm.
+      slot.name.setVisible(e.newT <= 0);
     }
   }
 

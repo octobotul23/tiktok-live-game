@@ -21,10 +21,14 @@ export interface GameSettings {
   giftersBypass: boolean;
   /** Câte caractere pot fi pe ecran deodată; restul stau la coadă. Pe telefon ajută o valoare mai mică. */
   maxActive: number;
+  /** Câte secunde are un caracter nou numele roșu deasupra și aura roșie (0 = oprit). */
+  newcomerSec: number;
 }
 
 /** Limitele pentru maxActive (serverul le impune, panoul le folosește la slider). */
 export const MAX_ACTIVE_RANGE = { min: 20, max: 1000 } as const;
+/** Limitele pentru newcomerSec. */
+export const NEWCOMER_SEC_RANGE = { min: 0, max: 60 } as const;
 
 export interface ServerInfo {
   /** Ce scrii în aplicația de telefon (ex. „pc.tailnet.ts.net:5180”); null dacă Tailscale nu e pornit. */

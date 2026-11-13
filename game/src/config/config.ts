@@ -39,6 +39,13 @@ export const CONFIG = {
     maxNames: 40,
   },
 
+  newcomer: {
+    /** Cât timp un caracter nou are numele roșu și aura roșie, până vine setarea din panou (0 = oprit). */
+    sec: 10,
+    /** Câte nume roșii pot fi afișate deodată. */
+    maxTags: 30,
+  },
+
   /** Durata fazelor dintre runde (s). Durata maximă a rundei e în setările fiecărui mod, mai jos. */
   round: {
     lobbySec: 10,

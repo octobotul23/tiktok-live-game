@@ -161,6 +161,7 @@ Din tastatură (când pagina jocului are focus) sau din panou, secțiunea **Stre
 | Limba | `GAME_LANG=ro` sau `en` | textele din joc și din panou. Comenzile din chat merg în ambele limbi oricum (`sus` și `up`). |
 | Doar urmăritorii pot intra | `FOLLOWERS_ONLY=true` | doar cine te urmărește primește caracter. Ceilalți pot vota în continuare și văd pe ecran „dă Follow ca să intri”. Cine dă follow în timpul live-ului intră imediat. Când pornești opțiunea, caracterele celor care nu te urmăresc ies din joc. |
 | Cine trimite un cadou intră oricum | `GIFTERS_BYPASS=true` | cu opțiunea de mai sus pornită, cine trimite un cadou intră chiar dacă nu te urmărește. |
+| Nume roșu și aură pentru cei noi | `NEWCOMER_SEC=10` | câte secunde (0–60) are un caracter abia apărut numele într-o etichetă roșie deasupra și o aură roșie în jur, ca spectatorul să-și găsească imediat caracterul. Se aplică și celor care revin după ce au ieșit pentru inactivitate. `0` oprește evidențierea. Cel mult 30 de nume roșii deodată (`CONFIG.newcomer.maxTags`). |
 
 Textele sunt în `game/src/i18n/ro.ts` și `game/src/i18n/en.ts`. Dacă adaugi un text nou în `ro.ts` și uiți traducerea din `en.ts`, `npm run typecheck` îți arată unde lipsește.
 
@@ -291,7 +292,7 @@ Zona de joc utilă e între 10% și 65% din înălțime: sus e bara TikTok, iar 
 
 ## Videoclipuri de prezentare
 
-`tools/video` filmează jocul „ca pe un LIVE”: deasupra jocului apare o interfață generică de LIVE (bara de sus, chatul, cadourile, inimioarele), iar o persoană urmărită (Mara / Mia) își scrie comenzile ca pe telefon: atinge căsuța, se deschide tastatura și fiecare tastă se apasă pe rând (Shift pentru majuscule, apăsare lungă pentru diacritice și semne, emoji din bara de sugestii), apoi atinge trimiterea și tastatura se închide. Deasupra caracterului ei din joc stă eticheta „TU · Mara”, ca să se vadă care e. Videoclipurile ies verticale, 1080×1920, 30 de cadre pe secundă, fără sunet.
+`tools/video` filmează jocul „ca pe un LIVE”: deasupra jocului apare o interfață generică de LIVE (bara de sus, chatul, cadourile, inimioarele), iar o persoană urmărită (Mara / Mia) își scrie comenzile ca pe telefon: atinge căsuța, se deschide tastatura și fiecare tastă se apasă pe rând (Shift pentru majuscule, apăsare lungă pentru diacritice și semne, emoji din bara de sugestii), apoi atinge trimiterea și tastatura se închide. Ca orice caracter nou, al ei apare întâi cu numele roșu și aura roșie din joc; după aceea, deasupra lui stă eticheta „TU · Mara”, ca să se vadă care e. Videoclipurile ies verticale, 1080×1920, 30 de cadre pe secundă, fără sunet.
 
 Ai nevoie de `npm run dev` pornit, de Chrome sau Edge și de `ffmpeg` în PATH.
 
@@ -320,7 +321,7 @@ npm run video -- survival-en vote-pvp-en
 
 ## Configurare și balans
 
-- `.env`: plafonul de caractere (`MAX_ACTIVE`), username-ul TikTok, modul simulator, cheia opțională Euler Stream, porturile, Wi-Fi-ul de acasă (`WIFI`), limba și „doar urmăritorii” (valorile de pornire).
+- `.env`: plafonul de caractere (`MAX_ACTIVE`), username-ul TikTok, modul simulator, cheia opțională Euler Stream, porturile, Wi-Fi-ul de acasă (`WIFI`), limba, „doar urmăritorii” și evidențierea celor noi (`NEWCOMER_SEC`) (valorile de pornire).
 - `game/src/config/config.ts`: plafonul de caractere (300), despawn-ul (90 s), dash-ul, duratele rundelor, combatul (rază, cooldown, damage), like-urile, XP-ul și balansul fiecărui mod (`survival`, `boss`).
 
 ## Maparea cadourilor

@@ -136,6 +136,8 @@ export const RO = {
   'app.connected': 'Conectat ✓',
   'app.disconnected': 'Neconectat. Verifică dacă serverul de pe calculator e pornit.',
   'panel.maxActive': 'Caractere pe ecran (max)',
+  'panel.newcomerSec': 'Nume roșu și aură pentru cei noi',
+  'panel.newcomerHint': 'Cât timp are un caracter abia apărut numele în roșu deasupra și o aură roșie, ca spectatorul să se găsească pe ecran. 0 oprește evidențierea.',
   'panel.maxActiveHint': 'Restul așteaptă la coadă. Pe telefon, dacă jocul se mișcă greu în timpul live-ului, scade valoarea.',
   'panel.screens': 'Ecrane',
   'panel.screenNone': 'niciun ecran de joc conectat',

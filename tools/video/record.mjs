@@ -122,7 +122,7 @@ window.__rec = (() => {
       // Eticheta „TU” deasupra caracterului persoanei urmărite, ca să știi care ești pe ecran.
       const me = scene.players.get(FEATURED);
       const e = me?.entity;
-      if (e && e.state !== 'despawning' && e.visible !== false) {
+      if (e && e.state !== 'despawning' && !(e.newT > 0)) {
         const r = game.canvas.getBoundingClientRect();
         const k = r.width / game.scale.width;
         __live.marker(r.left + e.x * k, r.top + (e.y - 22 * e.scale - 34) * k, me.nickname);

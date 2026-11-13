@@ -126,6 +126,8 @@ export const EN: Record<StringKey, string> = {
   'app.connected': 'Connected ✓',
   'app.disconnected': 'Not connected. Check that the server on your computer is running.',
   'panel.maxActive': 'Characters on screen (max)',
+  'panel.newcomerSec': 'Red name and aura for newcomers',
+  'panel.newcomerHint': 'How long a character that just appeared shows its name in red above it and a red aura, so the viewer can find themselves. 0 turns it off.',
   'panel.maxActiveHint': 'The rest wait in the queue. On the phone, if the game stutters during the LIVE, lower this.',
   'panel.screens': 'Screens',
   'panel.screenNone': 'no game screen connected',
